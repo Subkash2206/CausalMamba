@@ -1,0 +1,6 @@
+Layer,Stage,Resolution,DeltaDice,DeltaIoU,AVR_before,DeltaAVR
+layers.0.blocks.0,Encoder,64×64,-0.0295,-0.0512,0.107,-0.107
+layers.1.blocks.0,Encoder,64×64,-0.0223,-0.0389,0.184,-0.184
+layers.2.blocks.0,Encoder,64×64,-0.0169,-0.0296,0.158,-0.158
+layers.0.blocks.1,Encoder,64×64,-0.0082,-0.0145,0.166,-0.166
+layers_up.2.blocks.0,Decoder,16×16,-0.0040,-0.0071,0.270,-0.270

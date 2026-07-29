@@ -1,0 +1,6 @@
+Region,Error Rate (%),Ratio vs Interior
+Boundary +-5px,40.68,16.39
+Boundary +-10px,33.98,13.68
+Boundary +-20px,22.48,9.05
+Interior (Foreground),1.37,1.00
+Background (Far),1.16,0.85

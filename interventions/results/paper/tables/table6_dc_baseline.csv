@@ -1,0 +1,5 @@
+Metric,DC-only (0.01),LP (0.25),Baseline
+Dice,0.0604,0.8742,0.9408
+IoU,0.0311,0.7765,0.8882
+Sensitivity,0.0341,0.9291,0.9215
+Specificity,0.9574,0.9132,0.9834

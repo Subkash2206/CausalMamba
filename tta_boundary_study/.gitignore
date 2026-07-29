@@ -1,0 +1,56 @@
+# Datasets and large images
+cvc_clinicdb/
+brats2021/
+PNG/
+TIF/
+
+# Checkpoints and Model Weights
+checkpoints/*.pth
+checkpoints/*.pt
+checkpoints/*.ckpt
+
+# Results and Outputs
+# results/*.csv
+# results/*.json
+# results/figures/*.png
+# results/figures/*.pdf
+# results/figures/*.jpg
+
+# Python Environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

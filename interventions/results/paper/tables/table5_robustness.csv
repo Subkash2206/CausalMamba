@@ -1,0 +1,6 @@
+Rank,Exp 3 Layer (cutoff=0.25),Exp 5 Layer (cutoff=0.50),Match
+1,layers.0.blocks.0,layers.0.blocks.0,Yes
+2,layers.1.blocks.0,layers.3.blocks.0,No
+3,layers.2.blocks.0,layers.3.blocks.1,No
+4,layers.1.blocks.1,layers_up.0.blocks.0,No
+5,layers.0.blocks.1,layers_up.0.blocks.1,No

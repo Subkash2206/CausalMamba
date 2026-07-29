@@ -1,0 +1,9 @@
+data/
+best-ckpt/
+pretrained_weights/
+__pycache__/
+*.pth
+*.h5
+*.npz
+CUserssubka/
+C*Userssubka/

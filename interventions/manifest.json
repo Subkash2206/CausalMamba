@@ -1,0 +1,70 @@
+{
+  "project": "Causal Frequency Intervention for Medical Image Segmentation",
+  "version": "1.0.0",
+  "experiments": {
+    "experiment0": {
+      "purpose": "Identity validation",
+      "script": "experiments/experiment0_identity_validation.py",
+      "finding": "max |diff| = 7.45e-08",
+      "figure": "paper/figures/fig2_identity_validation.png"
+    },
+    "experiment1": {
+      "purpose": "Synthetic validation",
+      "script": "experiments/experiment1_synthetic_validation.py",
+      "finding": "Intervention alters predictions"
+    },
+    "experiment2": {
+      "purpose": "Whole-network low-pass",
+      "script": "experiments/experiment2_real_lowpass.py",
+      "finding": "Dice 0.941 -> 0.874 (-7.08%)",
+      "figure": "paper/figures/fig3_whole_network.png",
+      "table": "paper/tables/table2_whole_network.csv"
+    },
+    "experiment3": {
+      "purpose": "Layer-wise intervention",
+      "script": "experiments/experiment3_layerwise.py",
+      "finding": "Encoder 12x more important than decoder",
+      "figure": "paper/figures/fig4_layerwise_importance.png",
+      "table": "paper/tables/table3_layerwise.csv"
+    },
+    "experiment4": {
+      "purpose": "Cutoff sweep",
+      "script": "experiments/experiment4_cutoff_sweep.py",
+      "finding": "Nonlinear threshold at cutoff 0.10-0.20",
+      "figure": "paper/figures/fig5_cutoff_sweep.png",
+      "table": "paper/tables/table4_cutoff_sweep.csv"
+    },
+    "experiment5": {
+      "purpose": "Robustness verification",
+      "script": "experiments/experiment5_robustness.py",
+      "finding": "All 4 core conclusions confirmed",
+      "table": "paper/tables/table5_robustness.csv"
+    },
+    "experiment6": {
+      "purpose": "DC baseline and boundary analysis",
+      "script": "experiments/experiment6_dc_boundary.py",
+      "finding": "DC-only: Dice=0.06; Boundaries: 16.4x errors",
+      "figure": "paper/figures/fig7_boundary_errors.png",
+      "table": [
+        "paper/tables/table6_dc_baseline.csv",
+        "paper/tables/table7_boundary_analysis.csv"
+      ]
+    }
+  },
+  "figures": {
+    "fig2": "paper/figures/fig2_identity_validation.png",
+    "fig3": "paper/figures/fig3_whole_network.png",
+    "fig4": "paper/figures/fig4_layerwise_importance.png",
+    "fig5": "paper/figures/fig5_cutoff_sweep.png",
+    "fig6": "paper/figures/fig6_avr_vs_importance.png",
+    "fig7": "paper/figures/fig7_boundary_errors.png"
+  },
+  "tables": {
+    "table2": "paper/tables/table2_whole_network.csv",
+    "table3": "paper/tables/table3_layerwise.csv",
+    "table4": "paper/tables/table4_cutoff_sweep.csv",
+    "table6": "paper/tables/table6_dc_baseline.csv",
+    "table7": "paper/tables/table7_boundary_analysis.csv",
+    "table5": "paper/tables/table5_robustness.csv"
+  }
+}

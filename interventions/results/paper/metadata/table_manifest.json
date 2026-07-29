@@ -1,0 +1,61 @@
+{
+  "table2": {
+    "title": "Whole-Network Segmentation Metrics",
+    "experiment": "experiment2",
+    "description": "Baseline vs low-pass (cutoff=0.25) metrics on ISIC2018",
+    "columns": [
+      "Metric",
+      "Baseline",
+      "Low-pass (0.25)",
+      "Delta",
+      "Delta%"
+    ]
+  },
+  "table3": {
+    "title": "Layer-Wise Causal Importance (Top 5)",
+    "experiment": "experiment3",
+    "description": "Top 5 VSSBlocks ranked by |Delta Dice|",
+    "columns": [
+      "Layer",
+      "Stage",
+      "Resolution",
+      "DeltaDice",
+      "DeltaIoU",
+      "AVR_before",
+      "DeltaAVR"
+    ]
+  },
+  "table4": {
+    "title": "Low-Pass Cutoff Sweep Results",
+    "experiment": "experiment4",
+    "description": "Dice and IoU for whole-network and single-layer at 8 cutoffs",
+    "columns": [
+      "Cutoff",
+      "Dice_Whole",
+      "Dice_Single",
+      "IoU_Whole",
+      "IoU_Single"
+    ]
+  },
+  "table6": {
+    "title": "DC-Only Baseline",
+    "experiment": "experiment6",
+    "description": "Comparison of DC-only, LP(0.25), and baseline metrics",
+    "columns": [
+      "Metric",
+      "DC-only (0.01)",
+      "LP (0.25)",
+      "Baseline"
+    ]
+  },
+  "table7": {
+    "title": "Boundary Error Analysis",
+    "experiment": "experiment6",
+    "description": "Error rates by spatial region relative to lesion boundary",
+    "columns": [
+      "Region",
+      "Error Rate (%)",
+      "Ratio vs Interior"
+    ]
+  }
+}

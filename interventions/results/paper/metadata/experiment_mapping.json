@@ -1,0 +1,58 @@
+{
+  "experiment0": {
+    "name": "Identity Validation",
+    "directory": "experiment0_identity",
+    "script": "experiments/experiment0_identity_validation.py",
+    "figure": "fig2",
+    "table": null,
+    "results": "results/experiment0_identity/summary.md"
+  },
+  "experiment1": {
+    "name": "Intervention Validation (Synthetic)",
+    "directory": "experiment1_intervention_validation",
+    "script": "experiments/experiment1_synthetic_validation.py",
+    "figure": null,
+    "table": null,
+    "results": "results/experiment1_intervention_validation/summary.md"
+  },
+  "experiment2": {
+    "name": "Whole-Network Low-Pass",
+    "directory": "experiment2_whole_network",
+    "script": "experiments/experiment2_real_lowpass.py",
+    "figure": "fig3",
+    "table": "table2",
+    "results": "results/experiment2_whole_network/results.csv"
+  },
+  "experiment3": {
+    "name": "Layer-Wise Intervention",
+    "directory": "experiment3_layerwise",
+    "script": "experiments/experiment3_layerwise.py",
+    "figure": "fig4, fig6",
+    "table": "table3",
+    "results": "results/experiment3_layerwise/layerwise_results.csv"
+  },
+  "experiment4": {
+    "name": "Cutoff Sweep",
+    "directory": "experiment4_cutoff_sweep",
+    "script": "experiments/experiment4_cutoff_sweep.py",
+    "figure": "fig5",
+    "table": "table4",
+    "results": "results/experiment4_cutoff_sweep/cutoff_sweep.csv"
+  },
+  "experiment5": {
+    "name": "Robustness Verification",
+    "directory": "experiment5_robustness",
+    "script": "experiments/experiment5_robustness.py",
+    "figure": null,
+    "table": null,
+    "results": "results/experiment5_robustness/results.csv"
+  },
+  "experiment6": {
+    "name": "DC Baseline + Boundary Analysis",
+    "directory": "experiment6_dc_boundary",
+    "script": "experiments/experiment6_dc_boundary.py",
+    "figure": "fig7",
+    "table": "table6, table7",
+    "results": "results/experiment6_dc_boundary/dc_baseline.csv"
+  }
+}

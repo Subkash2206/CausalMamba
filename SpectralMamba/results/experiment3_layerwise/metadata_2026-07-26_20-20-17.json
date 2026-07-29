@@ -1,0 +1,9 @@
+{
+  "experiment": "Experiment 3: Layer-wise Low-Pass Intervention",
+  "model": "VM-UNet",
+  "dataset": "ISIC2018",
+  "cutoff": 0.25,
+  "num_images": 50,
+  "device": "cuda",
+  "timestamp": "2026-07-26_20-20-17"
+}

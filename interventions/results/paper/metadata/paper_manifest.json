@@ -1,0 +1,34 @@
+{
+  "title": "Causal Frequency Intervention in Medical Image Segmentation",
+  "venue": "SPIE Medical Imaging 2024",
+  "experiments": [
+    "experiment0",
+    "experiment1",
+    "experiment2",
+    "experiment3",
+    "experiment4",
+    "experiment5",
+    "experiment6"
+  ],
+  "figures": [
+    "fig1",
+    "fig2",
+    "fig3",
+    "fig4",
+    "fig5",
+    "fig6",
+    "fig7"
+  ],
+  "tables": [
+    "table2",
+    "table3",
+    "table4",
+    "table6",
+    "table7"
+  ],
+  "core_modules": [
+    "core/fft.py",
+    "core/masks.py",
+    "core/intervention.py"
+  ]
+}

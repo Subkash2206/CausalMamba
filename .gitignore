@@ -1,0 +1,68 @@
+# ── Data & Images ──────────────────────────────────
+data/
+**/data/
+*.h5
+*.npz
+*.npy
+
+# ── Model Checkpoints & Weights ────────────────────
+best-ckpt/
+**/best-ckpt/
+checkpoints/
+**/checkpoints/
+pretrained_weights/
+**/pretrained_weights/
+pre_trained_weights/
+**/pre_trained_weights/
+*.pth
+*.pt
+*.ckpt
+
+# ── Python ─────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.installed.cfg
+MANIFEST
+
+# ── Virtual Environments ───────────────────────────
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.Python
+
+# ── IDE & OS ───────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Jupyter ────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Logs ───────────────────────────────────────────
+*.log

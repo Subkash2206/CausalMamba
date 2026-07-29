@@ -1,0 +1,48 @@
+{
+  "fig1": {
+    "title": "Causal Frequency Intervention Framework",
+    "experiment": "none (schematic)",
+    "description": "Pipeline: Feature Tensor -> FFT -> Mask -> IFFT -> Modified Feature Tensor"
+  },
+  "fig2": {
+    "title": "Identity Intervention Validation",
+    "experiment": "experiment0",
+    "description": "Scatter plot showing baseline vs identity-intervened predictions (max |diff| = 7.45e-08)",
+    "source": "experiment0_identity_validation.py",
+    "table": "table2"
+  },
+  "fig3": {
+    "title": "Whole-Network Low-Pass Intervention",
+    "experiment": "experiment2",
+    "description": "Bar chart: baseline vs low-pass metrics (Dice, IoU, accuracy, sensitivity, specificity)",
+    "source": "experiment2_real_lowpass.py",
+    "table": "table2"
+  },
+  "fig4": {
+    "title": "Layer-Wise Causal Importance",
+    "experiment": "experiment3",
+    "description": "Horizontal bar chart: Delta Dice per VSSBlock layer",
+    "source": "experiment3_layerwise.py",
+    "table": "table3"
+  },
+  "fig5": {
+    "title": "Low-Pass Cutoff Sweep",
+    "experiment": "experiment4",
+    "description": "Dice vs cutoff for whole-network and single-layer protocols",
+    "source": "experiment4_cutoff_sweep.py",
+    "table": "table4"
+  },
+  "fig6": {
+    "title": "AVR vs Causal Importance",
+    "experiment": "experiment3",
+    "description": "Scatter: |Delta AVR| vs |Delta Dice| with encoder/decoder coloring",
+    "source": "experiment3_layerwise.py"
+  },
+  "fig7": {
+    "title": "Boundary Error Analysis",
+    "experiment": "experiment6",
+    "description": "Bar chart: error rates by region (boundary bands, interior, background)",
+    "source": "experiment6_dc_boundary.py",
+    "table": "table7"
+  }
+}
