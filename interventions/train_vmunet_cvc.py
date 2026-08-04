@@ -129,6 +129,7 @@ def main():
     print(f'\nTraining {args.epochs} epochs (AdamW, BCE+Dice) ...')
     print(f'  micro-batch={args.batch_size} x accumulation={acc_steps} '
           f'=> effective batch {eff_batch}')
+    _ep_start = datetime.datetime.now()
     for epoch in range(1, args.epochs + 1):
         model.train()
         train_loss = 0.0
@@ -141,6 +142,21 @@ def main():
             loss = combined_loss(probs.float(), masks.float()) / acc_steps
             scaler.scale(loss).backward()
             train_loss += loss.item() * acc_steps
+
+            _n = len(train_loader)
+            _el = (datetime.datetime.now() - _ep_start).total_seconds()
+            _frac = batch_idx / _n
+            _w = 24
+            _f = int(_w * _frac)
+            _eta = _el / max(_frac, 1e-9) * (1 - _frac)
+            print(f"\rEpoch {epoch:03d}/{args.epochs} | "
+                  f"[{'#' * _f}{'-' * (_w - _f)}] {_frac * 100:5.1f}% "
+                  f"| batch {batch_idx:3d}/{_n} "
+                  f"| loss {train_loss / batch_idx * acc_steps:7.4f} "
+                  f"| {_el:6.0f}s | ETA {_eta:6.0f}s",
+                  end='', flush=True)
+            if batch_idx == _n:
+                print()
 
             if batch_idx % acc_steps == 0 or batch_idx == len(train_loader):
                 scaler.step(optimizer)   # unscale + apply if grads finite

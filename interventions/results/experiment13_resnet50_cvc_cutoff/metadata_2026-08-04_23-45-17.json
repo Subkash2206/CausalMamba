@@ -1,0 +1,18 @@
+{
+  "experiment": "Exp 13: UNet-ResNet50 CVC cutoff sweep",
+  "dataset": "CVC-ClinicDB",
+  "img_size": 352,
+  "num_images": 123,
+  "cutoffs": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8
+  ],
+  "device": "cuda",
+  "timestamp": "2026-08-04_23-45-17"
+}
