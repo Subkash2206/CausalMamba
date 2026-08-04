@@ -1,0 +1,33 @@
+{
+  "whole_network_lp": {
+    "cutoff": 0.25,
+    "dice": 0.9175812329321646,
+    "iou": 0.847713713813186,
+    "accuracy": 0.9476205444335938,
+    "sensitivity": 0.9516197628497866,
+    "specificity": 0.9458538935539721
+  },
+  "boundary_errors": {
+    "cutoff": 0.25,
+    "boundary_widths": [
+      5,
+      10,
+      20
+    ],
+    "error_rate_boundary_5": 33.9364443995837,
+    "error_rate_boundary_10": 24.815295313213664,
+    "error_rate_boundary_20": 15.09360871427276,
+    "error_rate_interior": 0.5298091403502544,
+    "error_rate_background": 0.5628825824164455,
+    "boundary_interior_ratio": 28.48876563248189
+  },
+  "metadata": {
+    "experiment": "Experiment 9: UNet-ResNet50 Boundary Error Analysis",
+    "model": "UNet-ResNet50 (smp)",
+    "dataset": "ISIC2018",
+    "num_images": 50,
+    "device": "cuda",
+    "seed": 42,
+    "timestamp": "2026-08-04_18-10-51"
+  }
+}

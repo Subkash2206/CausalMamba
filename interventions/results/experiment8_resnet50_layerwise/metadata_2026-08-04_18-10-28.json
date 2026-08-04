@@ -1,0 +1,10 @@
+{
+  "experiment": "Experiment 8: UNet-ResNet50 Layer-wise Causal Intervention",
+  "model": "UNet-ResNet50 (smp)",
+  "dataset": "ISIC2018",
+  "cutoff": 0.25,
+  "num_images": 50,
+  "device": "cuda",
+  "seed": 42,
+  "timestamp": "2026-08-04_18-10-28"
+}

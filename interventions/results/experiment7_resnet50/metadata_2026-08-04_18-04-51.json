@@ -1,0 +1,53 @@
+{
+  "experiment": "Experiment 7: UNet-ResNet50 Causal Low-Pass Intervention",
+  "model": "UNet-ResNet50 (smp)",
+  "encoder_name": "resnet50",
+  "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\SpectralMamba\\VM-UNet\\best-ckpt\\best-unet-isic18.pth",
+  "dataset": "ISIC2018",
+  "dataset_path": "C:\\Users\\subka\\Documents\\mamba_1.1\\SpectralMamba\\VM-UNet\\data\\isic18\\train\\images\\",
+  "intervention_type": "lowpass",
+  "cutoff": 0.25,
+  "num_images": 50,
+  "num_masks": 50,
+  "device": "cuda",
+  "seed": 42,
+  "timestamp": "2026-08-04_18-04-51",
+  "mapped_hooks": [
+    [
+      "encoder.block1",
+      "encoder.layer1[-1]"
+    ],
+    [
+      "encoder.block2",
+      "encoder.layer2[-1]"
+    ],
+    [
+      "encoder.block3",
+      "encoder.layer3[-1]"
+    ],
+    [
+      "encoder.block4",
+      "encoder.layer4[-1]"
+    ],
+    [
+      "bridge",
+      "decoder.blocks[0]"
+    ],
+    [
+      "decoder.block1",
+      "decoder.blocks[1]"
+    ],
+    [
+      "decoder.block2",
+      "decoder.blocks[2]"
+    ],
+    [
+      "decoder.block3",
+      "decoder.blocks[3]"
+    ],
+    [
+      "decoder.block4",
+      "decoder.blocks[4]"
+    ]
+  ]
+}
