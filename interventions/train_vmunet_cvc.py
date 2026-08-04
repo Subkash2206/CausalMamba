@@ -39,7 +39,10 @@ def main():
     ap.add_argument('--seed', type=int, default=42)
     ap.add_argument('--img_size', type=int, default=352)
     ap.add_argument('--epochs', type=int, default=100)
-    ap.add_argument('--batch_size', type=int, default=8)
+    ap.add_argument('--batch_size', type=int, default=8,
+                    help='Micro-batch size (effective batch = batch_size * accumulation_steps)')
+    ap.add_argument('--accumulation_steps', type=int, default=1,
+                    help='Gradient accumulation steps; preserves effective batch size (default 1)')
     ap.add_argument('--lr', type=float, default=1e-4)
     ap.add_argument('--load_ckpt', default=None,
                     help='Optional ImageNet-1k pretrained backbone checkpoint')
@@ -114,18 +117,25 @@ def main():
     save_path = os.path.join(args.output_dir, 'best-vmunet-cvc.pth')
     best_val_loss = float('inf')
 
+    acc_steps = max(1, args.accumulation_steps)
+    eff_batch = args.batch_size * acc_steps
     print(f'\nTraining {args.epochs} epochs (AdamW, BCE+Dice) ...')
+    print(f'  micro-batch={args.batch_size} x accumulation={acc_steps} '
+          f'=> effective batch {eff_batch}')
     for epoch in range(1, args.epochs + 1):
         model.train()
         train_loss = 0.0
-        for imgs, masks in train_loader:
+        optimizer.zero_grad()
+        for batch_idx, (imgs, masks) in enumerate(train_loader, start=1):
             imgs, masks = imgs.to(device), masks.to(device)
-            optimizer.zero_grad()
             probs = model(imgs)  # sigmoid probabilities (VMUNet internal sigmoid)
-            loss = combined_loss(probs, masks)
+            loss = combined_loss(probs, masks) / acc_steps  # scale for accumulation
             loss.backward()
-            optimizer.step()
-            train_loss += loss.item()
+            train_loss += loss.item() * acc_steps
+
+            if batch_idx % acc_steps == 0 or batch_idx == len(train_loader):
+                optimizer.step()
+                optimizer.zero_grad()
         train_loss /= max(len(train_loader), 1)
         scheduler.step()
 
@@ -159,7 +169,8 @@ def main():
         'model': 'VM-UNet', 'depths': [2, 2, 9, 2],
         'depths_decoder': [2, 9, 2, 2], 'dataset': 'CVC-ClinicDB',
         'img_size': args.img_size, 'epochs': args.epochs,
-        'batch_size': args.batch_size, 'lr': args.lr, 'seed': args.seed,
+        'batch_size': args.batch_size, 'accumulation_steps': acc_steps,
+        'effective_batch_size': eff_batch, 'lr': args.lr, 'seed': args.seed,
         'device': str(device), 'checkpoint': save_path,
         'timestamp': datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
     }
