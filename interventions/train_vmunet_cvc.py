@@ -95,16 +95,17 @@ def main():
     # ------------------------------------------------------------------
     # Loss: BCE + soft-Dice (standard for binary segmentation)
     # ------------------------------------------------------------------
-    bce = nn.BCEWithLogitsLoss()
+    # NOTE: VMUNet.forward applies sigmoid internally when num_classes==1,
+    # so model(imgs) returns probabilities in [0,1] -- NOT raw logits.
+    bce = nn.BCELoss()  # expects probabilities
 
-    def soft_dice_loss(logits, masks, smooth=1.0):
-        probs = torch.sigmoid(logits)
+    def soft_dice_loss(probs, masks, smooth=1.0):
         inter = (probs * masks).sum(dim=(1, 2, 3))
         union = probs.sum(dim=(1, 2, 3)) + masks.sum(dim=(1, 2, 3))
         return 1.0 - ((2.0 * inter + smooth) / (union + smooth)).mean()
 
-    def combined_loss(logits, masks):
-        return bce(logits, masks) + soft_dice_loss(logits, masks)
+    def combined_loss(preds, masks):
+        return bce(preds, masks) + soft_dice_loss(preds, masks)
 
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
@@ -120,8 +121,8 @@ def main():
         for imgs, masks in train_loader:
             imgs, masks = imgs.to(device), masks.to(device)
             optimizer.zero_grad()
-            logits = model(imgs)
-            loss = combined_loss(logits, masks)
+            probs = model(imgs)  # sigmoid probabilities (VMUNet internal sigmoid)
+            loss = combined_loss(probs, masks)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -134,9 +135,8 @@ def main():
         with torch.no_grad():
             for imgs, masks in val_loader:
                 imgs, masks = imgs.to(device), masks.to(device)
-                logits = model(imgs)
-                val_loss += combined_loss(logits, masks).item()
-                probs = torch.sigmoid(logits)
+                probs = model(imgs)  # already sigmoid-ed
+                val_loss += combined_loss(probs, masks).item()
                 pred = (probs > 0.5).float()
                 inter = (pred * masks).sum().item()
                 union = pred.sum().item() + masks.sum().item()
