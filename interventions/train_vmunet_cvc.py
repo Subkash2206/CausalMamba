@@ -43,6 +43,10 @@ def main():
                     help='Micro-batch size (effective batch = batch_size * accumulation_steps)')
     ap.add_argument('--accumulation_steps', type=int, default=1,
                     help='Gradient accumulation steps; preserves effective batch size (default 1)')
+    ap.add_argument('--amp', action='store_true',
+                    help='Use mixed precision (autocast + GradScaler); no protocol change')
+    ap.add_argument('--checkpointing', action='store_true',
+                    help='Enable built-in gradient checkpointing (Chen et al. 2016)')
     ap.add_argument('--lr', type=float, default=1e-4)
     ap.add_argument('--load_ckpt', default=None,
                     help='Optional ImageNet-1k pretrained backbone checkpoint')
@@ -80,7 +84,8 @@ def main():
     _NC = {'num_classes': 1, 'input_channels': 3,
            'depths': [2, 2, 9, 2], 'depths_decoder': [2, 9, 2, 2],
            'drop_path_rate': 0.2,
-           'load_ckpt_path': args.load_ckpt}
+           'load_ckpt_path': args.load_ckpt,
+           'use_checkpoint': args.checkpointing}
     model = VMUNet(**_NC).to(device)
 
     # ImageNet-1k pretrained initialization (matching ISIC methodology).
@@ -112,6 +117,8 @@ def main():
 
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
+    scaler = torch.cuda.amp.GradScaler(enabled=bool(args.amp))
+    autocast = torch.cuda.amp.autocast(enabled=bool(args.amp))
 
     os.makedirs(args.output_dir, exist_ok=True)
     save_path = os.path.join(args.output_dir, 'best-vmunet-cvc.pth')
@@ -128,13 +135,16 @@ def main():
         optimizer.zero_grad()
         for batch_idx, (imgs, masks) in enumerate(train_loader, start=1):
             imgs, masks = imgs.to(device), masks.to(device)
-            probs = model(imgs)  # sigmoid probabilities (VMUNet internal sigmoid)
-            loss = combined_loss(probs, masks) / acc_steps  # scale for accumulation
-            loss.backward()
+            with autocast:
+                probs = model(imgs)  # sigmoid probabilities (VMUNet internal sigmoid)
+            # BCELoss is unsafe inside autocast -> compute loss in fp32.
+            loss = combined_loss(probs.float(), masks.float()) / acc_steps
+            scaler.scale(loss).backward()
             train_loss += loss.item() * acc_steps
 
             if batch_idx % acc_steps == 0 or batch_idx == len(train_loader):
-                optimizer.step()
+                scaler.step(optimizer)   # unscale + apply if grads finite
+                scaler.update()
                 optimizer.zero_grad()
         train_loss /= max(len(train_loader), 1)
         scheduler.step()
@@ -145,7 +155,8 @@ def main():
         with torch.no_grad():
             for imgs, masks in val_loader:
                 imgs, masks = imgs.to(device), masks.to(device)
-                probs = model(imgs)  # already sigmoid-ed
+                with autocast:
+                    probs = model(imgs)  # already sigmoid-ed
                 val_loss += combined_loss(probs, masks).item()
                 pred = (probs > 0.5).float()
                 inter = (pred * masks).sum().item()

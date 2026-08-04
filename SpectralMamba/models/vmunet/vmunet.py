@@ -11,6 +11,7 @@ class VMUNet(nn.Module):
                  depths_decoder=[2, 9, 2, 2],
                  drop_path_rate=0.2,
                  load_ckpt_path=None,
+                 use_checkpoint=False,
                 ):
         super().__init__()
 
@@ -22,6 +23,7 @@ class VMUNet(nn.Module):
                            depths=depths,
                            depths_decoder=depths_decoder,
                            drop_path_rate=drop_path_rate,
+                           use_checkpoint=use_checkpoint,
                         )
     
     def forward(self, x):
