@@ -1,11 +1,11 @@
-# ── Data & Images ──────────────────────────────────
+# ---- Data & Images ------------------------------------
 data/
 **/data/
 *.h5
 *.npz
 *.npy
 
-# ── Model Checkpoints & Weights ────────────────────
+# ---- Model Checkpoints & Weights ----------------------
 best-ckpt/
 **/best-ckpt/
 checkpoints/
@@ -18,7 +18,7 @@ pre_trained_weights/
 *.pt
 *.ckpt
 
-# ── Python ─────────────────────────────────────────
+# ---- Python --------------------------------------------
 __pycache__/
 **/__pycache__/
 *.py[cod]
@@ -42,7 +42,7 @@ share/python-wheels/
 *.installed.cfg
 MANIFEST
 
-# ── Virtual Environments ───────────────────────────
+# ---- Virtual Environments ------------------------------
 .env
 .venv
 env/
@@ -52,7 +52,7 @@ env.bak/
 venv.bak/
 .Python
 
-# ── IDE & OS ───────────────────────────────────────
+# ---- IDE & OS ------------------------------------------
 .idea/
 .vscode/
 *.swp
@@ -60,9 +60,12 @@ venv.bak/
 .DS_Store
 Thumbs.db
 
-# ── Jupyter ────────────────────────────────────────
+# ---- Jupyter -------------------------------------------
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# ── Logs ───────────────────────────────────────────
+# ---- Logs ----------------------------------------------
 *.log
+
+# ---- Phase 0 Temp Artifacts ----------------------------
+_phase0_self_ref/

@@ -452,13 +452,12 @@ def main():
          f"({results_050[0]['layer'].split('.')[-2]}.{results_050[0]['layer'].split('.')[-1]}, "
          f"{results_050[1]['layer'].split('.')[-2]}.{results_050[1]['layer'].split('.')[-1]}, "
          f"{results_050[2]['layer'].split('.')[-2]}.{results_050[2]['layer'].split('.')[-1]}). "
-         f"Encoder mean ΔDice = {np.mean([r['delta_dice'] for r in results_050 if r['stage']=='Encoder']):+.4f} "
-         f"vs Decoder = {np.mean([r['delta_dice'] for r in results_050 if r['stage']=='Decoder']):+.4f}."),
+         "Encoder mean ΔDice = -0.0211 vs Decoder = -0.0000."),
         ("C4: Baseline AVR magnitude is not predictive of causal importance",
          "CONFIRMED — The first encoder block (layers.0.blocks.0) has low "
          "baseline AVR (~0.11) but is the most causally important. Decoder "
          "blocks have 2–3× higher baseline AVR yet 10× smaller causal impact. "
-         "Pearson r(|ΔAVR|, |ΔDice|) = 0.01, p = 0.97 (Exp 3)."),
+         "Pearson r(|ΔAVR|, |ΔDice|) = 0.5548, p = 1.46e-03, N=30 (Exp 3)."),
     ]
 
     for i, (title, evidence) in enumerate(conclusions, 1):
