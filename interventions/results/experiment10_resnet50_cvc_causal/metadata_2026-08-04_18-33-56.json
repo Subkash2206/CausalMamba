@@ -1,0 +1,51 @@
+{
+  "experiment": "Experiment 10: UNet-ResNet50 CVC-ClinicDB Whole-Network Causal",
+  "model": "UNet-ResNet50 (smp)",
+  "dataset": "CVC-ClinicDB",
+  "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\unet_cvc_best.pth",
+  "intervention_type": "lowpass",
+  "cutoff": 0.25,
+  "img_size": 352,
+  "num_images": 123,
+  "device": "cuda",
+  "seed": 42,
+  "timestamp": "2026-08-04_18-33-56",
+  "mapped_hooks": [
+    [
+      "encoder.block1",
+      "encoder.layer1[-1]"
+    ],
+    [
+      "encoder.block2",
+      "encoder.layer2[-1]"
+    ],
+    [
+      "encoder.block3",
+      "encoder.layer3[-1]"
+    ],
+    [
+      "encoder.block4",
+      "encoder.layer4[-1]"
+    ],
+    [
+      "bridge",
+      "decoder.blocks[0]"
+    ],
+    [
+      "decoder.block1",
+      "decoder.blocks[1]"
+    ],
+    [
+      "decoder.block2",
+      "decoder.blocks[2]"
+    ],
+    [
+      "decoder.block3",
+      "decoder.blocks[3]"
+    ],
+    [
+      "decoder.block4",
+      "decoder.blocks[4]"
+    ]
+  ]
+}

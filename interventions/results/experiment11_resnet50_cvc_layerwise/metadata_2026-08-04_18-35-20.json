@@ -1,0 +1,11 @@
+{
+  "experiment": "Experiment 11: UNet-ResNet50 CVC-ClinicDB Layer-wise Causal",
+  "model": "UNet-ResNet50 (smp)",
+  "dataset": "CVC-ClinicDB",
+  "cutoff": 0.25,
+  "img_size": 352,
+  "num_images": 123,
+  "device": "cuda",
+  "seed": 42,
+  "timestamp": "2026-08-04_18-35-20"
+}

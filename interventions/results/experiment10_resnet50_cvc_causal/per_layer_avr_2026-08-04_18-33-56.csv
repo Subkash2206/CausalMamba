@@ -1,0 +1,10 @@
+Stage,AVR_Before,AVR_After,Delta_AVR,Reduction_Pct
+bridge,0.033071,0.000000,-3.31e-02,100.00
+decoder.block1,0.013926,0.000000,-1.39e-02,100.00
+decoder.block2,0.012705,0.000000,-1.27e-02,100.00
+decoder.block3,0.011636,0.000000,-1.16e-02,100.00
+decoder.block4,0.002922,0.000000,-2.92e-03,100.00
+encoder.block1,0.105829,0.000000,-1.06e-01,100.00
+encoder.block2,0.069155,0.000000,-6.92e-02,100.00
+encoder.block3,0.136723,0.000000,-1.37e-01,100.00
+encoder.block4,0.031911,0.000000,-3.19e-02,100.00

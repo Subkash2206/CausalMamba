@@ -1,0 +1,7 @@
+region,error_rate_pct
+boundary_5px,50.6728
+boundary_10px,45.9898
+boundary_20px,39.7095
+interior,87.2938
+background,2.9510
+boundary_interior_ratio,0.4549

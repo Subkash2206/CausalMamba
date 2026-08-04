@@ -1,0 +1,34 @@
+{
+  "whole_network_lp": {
+    "cutoff": 0.25,
+    "dice": 0.1791957678091088,
+    "iou": 0.0984157245688575,
+    "accuracy": 0.897786655181247,
+    "sensitivity": 0.13276109218214696,
+    "specificity": 0.9679798816279807
+  },
+  "boundary_errors": {
+    "cutoff": 0.25,
+    "boundary_widths": [
+      5,
+      10,
+      20
+    ],
+    "error_rate_boundary_5": 50.6728443269928,
+    "error_rate_boundary_10": 45.989790889205004,
+    "error_rate_boundary_20": 39.70951851333106,
+    "error_rate_interior": 87.29377201343256,
+    "error_rate_background": 2.9509513750340206,
+    "boundary_interior_ratio": 0.45489520721674975
+  },
+  "metadata": {
+    "experiment": "Experiment 12: UNet-ResNet50 CVC-ClinicDB Boundary Error Analysis",
+    "model": "UNet-ResNet50 (smp)",
+    "dataset": "CVC-ClinicDB",
+    "img_size": 352,
+    "num_images": 123,
+    "device": "cuda",
+    "seed": 42,
+    "timestamp": "2026-08-04_18-35-49"
+  }
+}
