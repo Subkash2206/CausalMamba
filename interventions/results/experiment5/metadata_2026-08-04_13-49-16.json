@@ -1,0 +1,12 @@
+{
+  "experiment": "Experiment 5: Robustness Verification",
+  "model": "VM-UNet",
+  "dataset": "ISIC2018",
+  "num_images": 50,
+  "device": "cuda",
+  "timestamp": "2026-08-04_13-49-16",
+  "comparison_cutoff": 0.5,
+  "exp3_cutoff": 0.25,
+  "top1_matches": false,
+  "top3_matches": false
+}

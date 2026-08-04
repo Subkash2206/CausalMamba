@@ -82,6 +82,24 @@ def get_mask_fn(cutoff):
 # ---------------------------------------------------------------------------
 
 def main():
+    # --- CLI (Phase 0): allow --output_dir and --seed for reproducibility ----
+    import argparse
+    import random
+    _ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    _ap.add_argument('--output_dir', default=None,
+                     help='Directory for results (default: <cwd>/results/experiment4_cutoff_sweep)')
+    _ap.add_argument('--seed', type=int, default=None,
+                     help='Random seed for reproducibility')
+    _ap.add_argument('--ckpt_path', default=None,
+                     help='Checkpoint path (default: best-vmunet-scratch-isic18.pth, 28-block)')
+    _args, _ = _ap.parse_known_args()
+    if _args.seed is not None:
+        random.seed(_args.seed)
+        torch.manual_seed(_args.seed)
+        np.random.seed(_args.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(_args.seed)
+
     from models.vmunet.vmunet import VMUNet
     from interventions.intervention import FrequencyIntervention
 
@@ -95,11 +113,12 @@ def main():
     vm_unet_root = os.path.join(os.getcwd(), 'VM-UNet')
     img_dir = os.path.join(vm_unet_root, 'data', 'isic18', 'train', 'images') + os.sep
     mask_dir = os.path.join(vm_unet_root, 'data', 'isic18', 'train', 'masks') + os.sep
-    ckpt_path = os.path.join(vm_unet_root, 'best-ckpt', 'best-vmunet-isic18.pth')
+    ckpt_path = _args.ckpt_path if _args.ckpt_path else os.path.join(
+        vm_unet_root, 'best-ckpt', 'best-vmunet-scratch-isic18.pth')
     n_images = 50
     cutoffs = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80]
-    _NC = {'num_classes': 1, 'input_channels': 3, 'depths': [2, 2, 2, 2],
-           'depths_decoder': [2, 2, 2, 1], 'drop_path_rate': 0.2}
+    _NC = {'num_classes': 1, 'input_channels': 3, 'depths': [2, 2, 9, 2],
+           'depths_decoder': [2, 9, 2, 2], 'drop_path_rate': 0.2}
 
     # -- Verify prerequisites -----------------------------------------------
     if not os.path.isdir(img_dir):
@@ -139,7 +158,7 @@ def main():
         ckpt = torch.load(ckpt_path, map_location=device)
         sd = ckpt.get('model_state_dict') or ckpt.get('state_dict') or ckpt
         mapped = {k: v for k, v in sd.items() if 'total_ops' not in k and 'total_params' not in k}
-        model_ref.load_state_dict(mapped)
+        model_ref.load_state_dict(mapped, strict=True)
         print("Checkpoint loaded.")
 
     # -- Identify VSSBlock layers -------------------------------------------
@@ -182,7 +201,7 @@ def main():
             return make_hook_func
 
         model_all = VMUNet(**_NC).to(device)
-        model_all.load_state_dict(model_ref.state_dict())
+        model_all.load_state_dict(model_ref.state_dict(), strict=True)
         model_all.eval()
         handles_all = []
         _hook_store_all.clear()
@@ -246,7 +265,7 @@ def main():
             return make_hook_func
 
         model_single = VMUNet(**_NC).to(device)
-        model_single.load_state_dict(model_ref.state_dict())
+        model_single.load_state_dict(model_ref.state_dict(), strict=True)
         model_single.eval()
         handles_single = []
         _hook_store_single.clear()
@@ -285,7 +304,7 @@ def main():
         avr_before_single_vals, avr_after_single_vals = [], []
 
         model_avr = VMUNet(**_NC).to(device)
-        model_avr.load_state_dict(model_ref.state_dict())
+        model_avr.load_state_dict(model_ref.state_dict(), strict=True)
         model_avr.eval()
         mask_fn_avr = get_mask_fn(cutoff)
         lp_avr = FrequencyIntervention(mask_fn_avr)
@@ -368,7 +387,8 @@ def main():
 
     # -- Save results -------------------------------------------------------
     _ts = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    _out_dir = os.path.join(os.getcwd(), 'results', 'experiment4_cutoff_sweep')
+    _out_dir = _args.output_dir if _args.output_dir else os.path.join(
+        os.getcwd(), 'results', 'experiment4_cutoff_sweep')
     os.makedirs(_out_dir, exist_ok=True)
 
     meta = {

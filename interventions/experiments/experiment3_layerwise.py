@@ -76,6 +76,24 @@ def compute_avr(fmap):
 # ---------------------------------------------------------------------------
 
 def main():
+    # --- CLI (Phase 0): allow --output_dir and --seed for reproducibility ----
+    import argparse
+    import random
+    _ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    _ap.add_argument('--output_dir', default=None,
+                     help='Directory for results (default: <cwd>/results/experiment3_layerwise)')
+    _ap.add_argument('--seed', type=int, default=None,
+                     help='Random seed for reproducibility')
+    _ap.add_argument('--ckpt_path', default=None,
+                     help='Checkpoint path (default: best-vmunet-scratch-isic18.pth, 28-block)')
+    _args, _ = _ap.parse_known_args()
+    if _args.seed is not None:
+        random.seed(_args.seed)
+        torch.manual_seed(_args.seed)
+        np.random.seed(_args.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(_args.seed)
+
     # Lazy imports
     from models.vmunet.vmunet import VMUNet
     from interventions.intervention import FrequencyIntervention
@@ -91,10 +109,11 @@ def main():
     vm_unet_root = os.path.join(os.getcwd(), 'VM-UNet')
     img_dir = os.path.join(vm_unet_root, 'data', 'isic18', 'train', 'images') + os.sep
     mask_dir = os.path.join(vm_unet_root, 'data', 'isic18', 'train', 'masks') + os.sep
-    ckpt_path = os.path.join(vm_unet_root, 'best-ckpt', 'best-vmunet-isic18.pth')
+    ckpt_path = _args.ckpt_path if _args.ckpt_path else os.path.join(
+        vm_unet_root, 'best-ckpt', 'best-vmunet-scratch-isic18.pth')
     n_images = 50
-    _NC = {'num_classes': 1, 'input_channels': 3, 'depths': [2, 2, 2, 2],
-           'depths_decoder': [2, 2, 2, 1], 'drop_path_rate': 0.2}
+    _NC = {'num_classes': 1, 'input_channels': 3, 'depths': [2, 2, 9, 2],
+           'depths_decoder': [2, 9, 2, 2], 'drop_path_rate': 0.2}
 
     # -- Verify prerequisites -----------------------------------------------
     if not os.path.isdir(img_dir):
@@ -134,7 +153,7 @@ def main():
         ckpt = torch.load(ckpt_path, map_location=device)
         sd = ckpt.get('model_state_dict') or ckpt.get('state_dict') or ckpt
         mapped = {k: v for k, v in sd.items() if 'total_ops' not in k and 'total_params' not in k}
-        model_ref.load_state_dict(mapped)
+        model_ref.load_state_dict(mapped, strict=True)
         print("Checkpoint loaded.")
 
     # -- Identify VSSBlock layers -------------------------------------------
@@ -180,7 +199,7 @@ def main():
     def run_one_config(lowpass_layer_name):
         """Run inference with low-pass on one layer, identity on all others."""
         model = VMUNet(**_NC).to(device)
-        model.load_state_dict(model_ref.state_dict())
+        model.load_state_dict(model_ref.state_dict(), strict=True)
         model.eval()
 
         handles = []
@@ -249,7 +268,7 @@ def main():
         # Compute AVR for this layer using a separate forward pass
         # (Recording both before/after in the same pass would need hook changes)
         model_tmp = VMUNet(**_NC).to(device)
-        model_tmp.load_state_dict(model_ref.state_dict())
+        model_tmp.load_state_dict(model_ref.state_dict(), strict=True)
         model_tmp.eval()
         lp_interv = FrequencyIntervention(
             lambda h, w, dev, dt: lowpass_mask(h, w, 0.25, device=dev, dtype=dt)
@@ -349,7 +368,8 @@ def main():
 
     # -- Save results -------------------------------------------------------
     _ts = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    _out_dir = os.path.join(os.getcwd(), 'results', 'experiment3_layerwise')
+    _out_dir = _args.output_dir if _args.output_dir else os.path.join(
+        os.getcwd(), 'results', 'experiment3_layerwise')
     os.makedirs(_out_dir, exist_ok=True)
 
     # Metadata

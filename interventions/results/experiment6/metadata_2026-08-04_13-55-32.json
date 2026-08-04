@@ -1,0 +1,35 @@
+{
+  "dc_only": {
+    "cutoff": 0.01,
+    "dice": 0.0,
+    "iou": 0.0,
+    "accuracy": 0.6936019897460938,
+    "sensitivity": 0.0,
+    "specificity": 1.0,
+    "pred_mean": 2.9113431665450662e-08,
+    "pred_std": 2.1776072056667317e-09,
+    "degenerate": true
+  },
+  "boundary_errors": {
+    "cutoff": 0.25,
+    "boundary_widths": [
+      5,
+      10,
+      20
+    ],
+    "error_rate_boundary_5": 35.542784882217845,
+    "error_rate_boundary_10": 26.776173342261366,
+    "error_rate_boundary_20": 16.621244148962745,
+    "error_rate_interior": 2.6060217927111324,
+    "error_rate_background": 0.1808438147691382,
+    "boundary_interior_ratio": 6.378014232908989
+  },
+  "metadata": {
+    "experiment": "Experiment 6: DC-Only Baseline & Boundary Error Analysis",
+    "model": "VM-UNet",
+    "dataset": "ISIC2018",
+    "num_images": 50,
+    "device": "cuda",
+    "timestamp": "2026-08-04_13-55-32"
+  }
+}

@@ -42,11 +42,11 @@ def main():
     try:
         checkpoint = torch.load(ckpt_path, map_location=device)
         if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
-            model.load_state_dict(checkpoint['model_state_dict'])
+            model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         elif isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
-            model.load_state_dict(checkpoint['state_dict'])
+            model.load_state_dict(checkpoint['state_dict'], strict=True)
         else:
-            model.load_state_dict(checkpoint)
+            model.load_state_dict(checkpoint, strict=True)
         print('Checkpoint loaded successfully.')
     except Exception as e:
         print(f'Error loading checkpoint: {e}')

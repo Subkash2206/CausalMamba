@@ -93,13 +93,32 @@ def compute_avr(fmap: torch.Tensor) -> float:
 # ---------------------------------------------------------------------------
 
 def main():
+    # --- CLI (Phase 0): allow --output_dir and --seed for reproducibility ----
+    import argparse
+    import random
+    _ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    _ap.add_argument('--output_dir', default=None,
+                     help='Directory for results (default: <cwd>/results/experiment2)')
+    _ap.add_argument('--seed', type=int, default=None,
+                     help='Random seed for reproducibility')
+    _ap.add_argument('--ckpt_path', default=None,
+                     help='Checkpoint path (default: best-vmunet-scratch-isic18.pth, 28-block)')
+    _args, _ = _ap.parse_known_args()
+    if _args.seed is not None:
+        random.seed(_args.seed)
+        torch.manual_seed(_args.seed)
+        np.random.seed(_args.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(_args.seed)
+
     # --- Lazy imports: expensive model init deferred from module level ----
     from models.vmunet.vmunet import VMUNet
     from interventions.intervention import FrequencyIntervention
     from interventions.masks import lowpass_mask
-    # Config values found via repo search: checkpoint trained with depths=[2,2,2,2]
-    _NC = {'num_classes': 1, 'input_channels': 3, 'depths': [2,2,2,2],
-           'depths_decoder': [2,2,2,1], 'drop_path_rate': 0.2}
+    # Canonical VM-UNet topology (depths=[2, 2, 9, 2]) — MUST match the
+    # pre-trained checkpoint from SpectralMamba/models/vmunet/vmunet.py
+    _NC = {'num_classes': 1, 'input_channels': 3, 'depths': [2, 2, 9, 2],
+           'depths_decoder': [2, 9, 2, 2], 'drop_path_rate': 0.2}
     _HAS_BOUNDARY = False
     try:
         from src.metrics.boundary_metrics import BoundaryMetrics
@@ -120,7 +139,8 @@ def main():
     vm_unet_root = os.path.join(os.getcwd(), 'VM-UNet')
     img_dir = os.path.join(vm_unet_root, 'data', 'isic18', 'train', 'images') + os.sep
     mask_dir = os.path.join(vm_unet_root, 'data', 'isic18', 'train', 'masks') + os.sep
-    ckpt_path = os.path.join(vm_unet_root, 'best-ckpt', 'best-vmunet-isic18.pth')
+    ckpt_path = _args.ckpt_path if _args.ckpt_path else os.path.join(
+        vm_unet_root, 'best-ckpt', 'best-vmunet-scratch-isic18.pth')
     n_images = 50  # match original avr_analysis.py
 
     # Verify dataset exists
@@ -205,7 +225,7 @@ def main():
                 continue
             mapped[k] = v
 
-        model.load_state_dict(mapped)
+        model.load_state_dict(mapped, strict=True)
         print("Checkpoint loaded.")
     else:
         print(f"WARNING: Checkpoint not found at {ckpt_path}.")
@@ -225,7 +245,7 @@ def main():
         depths_decoder=_NC['depths_decoder'],
         drop_path_rate=_NC['drop_path_rate'],
     ).to(device)
-    model_bl.load_state_dict(model.state_dict())
+    model_bl.load_state_dict(model.state_dict(), strict=True)
     model_bl.eval()
 
     # Identity mask — verifies the hook pipeline adds no distortion
@@ -319,7 +339,7 @@ def main():
         depths_decoder=_NC['depths_decoder'],
         drop_path_rate=_NC['drop_path_rate'],
     ).to(device)
-    model_lp.load_state_dict(model.state_dict())
+    model_lp.load_state_dict(model.state_dict(), strict=True)
     model_lp.eval()
 
     lp_fn = lambda h, w, dev, dt: lowpass_mask(h, w, 0.25, device=dev, dtype=dt)
@@ -406,7 +426,8 @@ def main():
     # --- Save metadata ----------------------------------------------------
     import datetime, json
     _timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    _results_dir = os.path.join(os.getcwd(), 'results', 'experiment2')
+    _results_dir = _args.output_dir if _args.output_dir else os.path.join(
+        os.getcwd(), 'results', 'experiment2')
     os.makedirs(_results_dir, exist_ok=True)
     _meta = {
         'experiment': 'Experiment 2: Real Dataset Low-Pass Intervention',
