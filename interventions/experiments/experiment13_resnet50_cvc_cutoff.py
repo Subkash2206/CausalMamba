@@ -57,6 +57,7 @@ def main():
     ap.add_argument("--output_dir", default=None)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--ckpt_path", default=None)
+    ap.add_argument("--img_size", type=int, default=256)
     args, _ = ap.parse_known_args()
     random.seed(args.seed); torch.manual_seed(args.seed); np.random.seed(args.seed)
 
@@ -71,7 +72,7 @@ def main():
     ckpt = args.ckpt_path or os.path.join(_REPO, "tta_boundary_study", "checkpoints", "unet_cvc_best.pth")
     img_dir = os.path.join(_REPO, "tta_boundary_study", "cvc_clinicdb", "original")
     mask_dir = os.path.join(_REPO, "tta_boundary_study", "cvc_clinicdb", "ground_truth")
-    ds = CVCDataset(img_dir, mask_dir, split="val", img_size=352)
+    ds = CVCDataset(img_dir, mask_dir, split="val", img_size=args.img_size)
     loader = DataLoader(ds, batch_size=1, shuffle=False)
     sd = torch.load(ckpt, map_location="cpu")
     if isinstance(sd, dict) and "encoder.conv1.weight" not in sd:
@@ -106,7 +107,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=["cutoff", "dice", "iou"])
         w.writeheader(); w.writerows(rows)
     meta = {"experiment": "Exp 13: UNet-ResNet50 CVC cutoff sweep", "dataset": "CVC-ClinicDB",
-            "img_size": 352, "num_images": len(ds), "cutoffs": [r["cutoff"] for r in rows],
+            "img_size": args.img_size, "num_images": len(ds), "cutoffs": [r["cutoff"] for r in rows],
             "device": str(device), "timestamp": ts}
     with open(os.path.join(out, f"metadata_{ts}.json"), "w") as f:
         json.dump(meta, f, indent=2)

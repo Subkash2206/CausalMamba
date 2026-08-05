@@ -72,7 +72,7 @@ def main():
     # ------------------------------------------------------------------
     train_ds = CVCDataset(CVC_IMG_DIR, CVC_MASK_DIR, split='train', img_size=args.img_size)
     val_ds = CVCDataset(CVC_IMG_DIR, CVC_MASK_DIR, split='val', img_size=args.img_size)
-    print(f'Train: {len(train_ds)} images | Val: {len(val_ds)} images | 352x352')
+    print(f'Train: {len(train_ds)} images | Val: {len(val_ds)} images | {args.img_size}x{args.img_size}')
 
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True,
                               num_workers=4, drop_last=True)
