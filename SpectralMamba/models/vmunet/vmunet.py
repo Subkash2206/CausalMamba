@@ -36,7 +36,7 @@ class VMUNet(nn.Module):
     def load_from(self):
         if self.load_ckpt_path is not None:
             model_dict = self.vmunet.state_dict()
-            modelCheckpoint = torch.load(self.load_ckpt_path)
+            modelCheckpoint = torch.load(self.load_ckpt_path, weights_only=False)
             pretrained_dict = modelCheckpoint['model']
             # 过滤操作
             new_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
@@ -50,7 +50,7 @@ class VMUNet(nn.Module):
             print("encoder loaded finished!")
 
             model_dict = self.vmunet.state_dict()
-            modelCheckpoint = torch.load(self.load_ckpt_path)
+            modelCheckpoint = torch.load(self.load_ckpt_path, weights_only=False)
             pretrained_odict = modelCheckpoint['model']
             pretrained_dict = {}
             for k, v in pretrained_odict.items():

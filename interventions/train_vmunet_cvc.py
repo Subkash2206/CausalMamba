@@ -173,7 +173,7 @@ def main():
                 imgs, masks = imgs.to(device), masks.to(device)
                 with autocast:
                     probs = model(imgs)  # already sigmoid-ed
-                val_loss += combined_loss(probs, masks).item()
+                val_loss += combined_loss(probs.float(), masks.float()).item()
                 pred = (probs > 0.5).float()
                 inter = (pred * masks).sum().item()
                 union = pred.sum().item() + masks.sum().item()

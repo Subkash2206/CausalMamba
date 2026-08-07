@@ -68,4 +68,4 @@ Thumbs.db
 *.log
 
 # ---- Phase 0 Temp Artifacts ----------------------------
-_phase0_self_ref/
+_phase0_self_ref/scratch_speed.py 

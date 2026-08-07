@@ -12,25 +12,8 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 try:
     from mamba_ssm.ops.selective_scan_interface import selective_scan_fn, selective_scan_ref
 except:
-    @torch.jit.script
-    def selective_scan_loop(L: int, deltaA, deltaB_u, C, x, C_is_3d: bool, dim: int):
-        ys = []
-        for i in range(L):
-            x = deltaA[:, :, i, :] * x + deltaB_u[:, :, i, :]
-            if C_is_3d:
-                y = torch.einsum('bdn,bn->bd', x, C[:, :, i])
-            else:
-                # Grouped C (assuming K=4)
-                G = 4 
-                # We can't use repeat inside JIT easily with strings, so we use reshape/expand
-                # C is (B, G, N, L) -> C[:, :, :, i] is (B, G, N)
-                C_i = C[:, :, :, i].unsqueeze(2).expand(-1, -1, dim // G, -1).reshape(x.shape[0], dim, -1)
-                y = torch.einsum('bdn,bdn->bd', x, C_i)
-            ys.append(y)
-        return torch.stack(ys, dim=2)
-
     def selective_scan_fn(u, delta, A, B, C, D=None, z=None, delta_bias=None, delta_softplus=False, return_last_state=False):
-        """Pure-PyTorch implementation of selective scan for compatibility."""
+        """Fast vectorized selective scan — no per-timestep Python loop."""
         dtype = u.dtype
         u = u.float()
         delta = delta.float()
@@ -38,10 +21,90 @@ except:
             delta = delta + delta_bias[..., None].float()
         if delta_softplus:
             delta = F.softplus(delta)
-        
+
         batch, dim, dstate = u.shape[0], A.shape[0], A.shape[1]
         L = u.shape[2]
+
+        # deltaA: (B, D, L, N) — elementwise decay per timestep
+        deltaA = torch.exp(torch.einsum('bdl,dn->bdln', delta, A))
+
+        if B.dim() == 3:
+            B_u = torch.einsum('bnl,bdl->bdln', B, u)
+            deltaB_u = (deltaA - 1.0) * (B_u / A.unsqueeze(0).unsqueeze(2))
+            C_is_3d = True
+        else:
+            G = B.shape[1]
+            B_expanded = B.unsqueeze(2).expand(-1, -1, dim // G, -1, -1).reshape(batch, dim, dstate, L)
+            deltaB_u = (deltaA - 1.0) * (torch.einsum('bdnl,bdl->bdln', B_expanded, u) / A.unsqueeze(0).unsqueeze(2))
+            C_is_3d = False
+
+        # ------ Fast vectorized associative scan ------
+        # x[t] = sum_{j=0}^{t} deltaB_u[j] * prod_{k=j+1}^{t} deltaA[k]
+        # Using prefix multiplication: prefA[t] = prod_{j=0}^{t} deltaA[j]
+        # Then x[t] = sum_{j=0}^{t} deltaB_u[j] / prefA[j] * prefA[t]
+        # Equivalent: x = cumsum(deltaB_u / prefA) * prefA
+
+        prefA = torch.cumprod(deltaA, dim=2)  # (B, D, L, N)
+        # Avoid division by zero from near-zero deltaA entries
+        prefA_safe = prefA + 1e-12
+        scaled_B = deltaB_u / prefA_safe
+        x_all = torch.cumsum(scaled_B, dim=2) * prefA
+
+        # Compute outputs in parallel
+        if C_is_3d:
+            # C: (B, N, L) — per-timestep weight vectors
+            y = torch.einsum('bdln,bnl->bdl', x_all, C)
+        else:
+            # C: (B, G, N, L) with grouping
+            G = C.shape[1]
+            C_expanded = C.unsqueeze(2).expand(-1, -1, dim // G, -1, -1).reshape(batch, dim, dstate, L)
+            y = torch.einsum('bdln,bdnl->bdl', x_all, C_expanded)
+
+        if D is not None:
+            y = y + u * D[..., None]
+        if z is not None:
+            y = y * F.silu(z)
+        return y.to(dtype)
+
+    @torch.jit.script
+    def selective_scan_loop_3d(deltaA, deltaB_u, C, x):
+        L = deltaA.shape[2]
+        ys = []
+        for i in range(L):
+            x = deltaA[:, :, i, :] * x + deltaB_u[:, :, i, :]
+            y = torch.einsum('bdn,bn->bd', x, C[:, :, i])
+            ys.append(y)
+        return torch.stack(ys, dim=2), x
+
+    @torch.jit.script
+    def selective_scan_loop_4d(deltaA, deltaB_u, C, x):
+        L = deltaA.shape[2]
+        dim = x.shape[1]
+        ys = []
+        for i in range(L):
+            x = deltaA[:, :, i, :] * x + deltaB_u[:, :, i, :]
+            G = 4 
+            C_i = C[:, :, :, i].unsqueeze(2).expand(-1, -1, dim // G, -1).contiguous().reshape(x.shape[0], dim, -1)
+            y = torch.einsum('bdn,bdn->bd', x, C_i)
+            ys.append(y)
+        return torch.stack(ys, dim=2), x
+
+    def selective_scan_fn_chunked(u, delta, A, B, C, D=None, z=None, delta_bias=None, delta_softplus=False, return_last_state=False, chunk_size=None):
+        """Native JIT execution without checkpoint wrappers to prevent TorchScript interpreter crashes during Autograd backward passes."""
+        if u.stride(-1) != 1: u = u.contiguous()
+        if delta.stride(-1) != 1: delta = delta.contiguous()
+        if D is not None: D = D.contiguous()
+        if B.stride(-1) != 1: B = B.contiguous()
+        if C.stride(-1) != 1: C = C.contiguous()
+        if z is not None and z.stride(-1) != 1: z = z.contiguous()
+
+        batch, dim, dstate = u.shape[0], A.shape[0], A.shape[1]
         
+        if delta_bias is not None:
+            delta = delta + delta_bias[..., None].float()
+        if delta_softplus:
+            delta = F.softplus(delta)
+            
         deltaA = torch.exp(torch.einsum('bdl,dn->bdln', delta, A))
         
         if B.dim() == 3:
@@ -49,11 +112,17 @@ except:
             deltaB_u = (deltaA - 1.0) * (B_u / A.unsqueeze(0).unsqueeze(2))
         else:
             G = B.shape[1]
-            B_expanded = B.unsqueeze(2).expand(-1, -1, dim // G, -1, -1).reshape(batch, dim, dstate, L)
+            B_expanded = B.unsqueeze(2).expand(-1, -1, dim // G, -1, -1).reshape(batch, dim, dstate, -1)
             deltaB_u = (deltaA - 1.0) * (torch.einsum('bdnl,bdl->bdln', B_expanded, u) / A.unsqueeze(0).unsqueeze(2))
             
         x = torch.zeros(batch, dim, dstate, device=u.device, dtype=torch.float)
-        y = selective_scan_loop(L, deltaA, deltaB_u, C, x, C.dim() == 3, dim)
+        
+        if C.dim() == 3:
+            y, _ = selective_scan_loop_3d(deltaA, deltaB_u, C, x)
+        else:
+            y, _ = selective_scan_loop_4d(deltaA, deltaB_u, C, x)
+            
+        dtype = u.dtype
         
         if D is not None:
             y = y + u * D[..., None]
