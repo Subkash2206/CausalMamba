@@ -1,0 +1,44 @@
+{
+  "cutoff_radius": 0.25,
+  "quantile_thresholds_px": {
+    "small_medium": 2754.0,
+    "medium_large": 6017.666666666666
+  },
+  "per_bin": {
+    "Small": {
+      "n": 41,
+      "area_min": 387,
+      "area_max": 2720,
+      "baseline_dice": 0.8401160774378182,
+      "intervened_dice": 0.10632015972031704,
+      "delta_dice": -0.7337959177175012
+    },
+    "Medium": {
+      "n": 41,
+      "area_min": 2771,
+      "area_max": 5972,
+      "baseline_dice": 0.8814758225517535,
+      "intervened_dice": 0.2494019935157792,
+      "delta_dice": -0.6320738290359743
+    },
+    "Large": {
+      "n": 41,
+      "area_min": 6109,
+      "area_max": 26466,
+      "baseline_dice": 0.9122497203942105,
+      "intervened_dice": 0.3191278653269266,
+      "delta_dice": -0.5931218550672839
+    }
+  },
+  "metadata": {
+    "experiment": "Experiment 16: VM-UNet CVC-ClinicDB Lesion-Size Confound Check",
+    "model": "VM-UNet (30-block)",
+    "dataset": "CVC-ClinicDB",
+    "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\best-vmunet-cvc.pth",
+    "img_size": 256,
+    "num_images": 123,
+    "device": "cuda",
+    "seed": 42,
+    "timestamp": "2026-08-10_20-59-18"
+  }
+}

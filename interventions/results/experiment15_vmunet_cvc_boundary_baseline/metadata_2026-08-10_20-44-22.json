@@ -1,0 +1,35 @@
+{
+  "mode": "baseline",
+  "cutoff_radius": 0.25,
+  "segmentation": {
+    "dice": 0.895701213054301,
+    "iou": 0.8111040450670574,
+    "accuracy": 0.9817968849244156,
+    "sensitivity": 0.9307627195010437,
+    "specificity": 0.986475478382637
+  },
+  "boundary_errors": {
+    "boundary_widths": [
+      5,
+      10,
+      20
+    ],
+    "error_rate_boundary_5": 20.379660862616053,
+    "error_rate_boundary_10": 13.934842175379394,
+    "error_rate_boundary_20": 8.825467891642734,
+    "error_rate_interior": 0.10197301947637116,
+    "error_rate_background": 0.3121371023864314,
+    "boundary_interior_ratio": 86.54707952643244
+  },
+  "metadata": {
+    "experiment": "Experiment 15: VM-UNet CVC-ClinicDB Boundary-vs-Interior Error Analysis",
+    "model": "VM-UNet (30-block)",
+    "dataset": "CVC-ClinicDB",
+    "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\best-vmunet-cvc.pth",
+    "img_size": 256,
+    "num_images": 123,
+    "device": "cuda",
+    "seed": 42,
+    "timestamp": "2026-08-10_20-44-22"
+  }
+}

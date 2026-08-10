@@ -1,0 +1,13 @@
+{
+  "experiment": "Experiment 14: VM-UNet CVC-ClinicDB Whole-Network Causal",
+  "model": "VM-UNet (30-block)",
+  "dataset": "CVC-ClinicDB",
+  "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\best-vmunet-cvc.pth",
+  "intervention_type": "lowpass",
+  "cutoff": 0.25,
+  "img_size": 256,
+  "num_images": 123,
+  "device": "cuda",
+  "seed": 123,
+  "timestamp": "2026-08-10_20-24-28"
+}
