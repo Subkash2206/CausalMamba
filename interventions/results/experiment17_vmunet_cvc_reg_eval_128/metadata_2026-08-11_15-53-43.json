@@ -1,0 +1,13 @@
+{
+  "experiment": "Experiment 17: VM-UNet Regularized CVC Whole-Network Causal",
+  "model": "VM-UNet (30-block)",
+  "dataset": "CVC-ClinicDB",
+  "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\interventions\\results\\best-vmunet-cvc-reg\\best-vmunet-cvc-reg.pth",
+  "intervention_type": "lowpass",
+  "cutoff": 0.25,
+  "img_size": 128,
+  "num_images": 123,
+  "device": "cuda",
+  "seed": null,
+  "timestamp": "2026-08-11_15-53-43"
+}

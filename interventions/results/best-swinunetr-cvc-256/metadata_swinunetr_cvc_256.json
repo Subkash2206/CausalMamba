@@ -1,0 +1,13 @@
+{
+  "experiment": "Swin-UNETR CVC retrain @256 (resolution-confound fix)",
+  "model": "SwinUNETR (MONAI, spatial_dims=2)",
+  "dataset": "CVC-ClinicDB",
+  "img_size": 256,
+  "epochs": 100,
+  "batch_size": 8,
+  "lr": 0.0001,
+  "seed": 42,
+  "device": "cuda",
+  "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\interventions\\results\\best-swinunetr-cvc-256\\best-swinunetr-cvc-256.pth",
+  "timestamp": "2026-08-12_18-20-26"
+}

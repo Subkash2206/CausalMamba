@@ -1,0 +1,36 @@
+{
+  "experiment": "VM-UNet CVC-ClinicDB regularized training (Phase 4)",
+  "model": "VM-UNet",
+  "depths": [
+    2,
+    2,
+    9,
+    2
+  ],
+  "depths_decoder": [
+    2,
+    9,
+    2,
+    2
+  ],
+  "dataset": "CVC-ClinicDB",
+  "img_size": 128,
+  "epochs": 100,
+  "batch_size": 1,
+  "grad_accum_steps": 8,
+  "effective_batch_size": 8,
+  "lr": 0.0001,
+  "seed": 42,
+  "amp": true,
+  "max_batches": null,
+  "spectral": {
+    "loss": "HighFrequencyConsistencyLoss",
+    "lambda_spectral": 0.05,
+    "cutoff_radius": 0.25,
+    "perturb_std": 0.05,
+    "hook": "vmunet.layers[0].blocks[0]"
+  },
+  "device": "cuda",
+  "checkpoint": "interventions\\results\\best-vmunet-cvc-reg\\best-vmunet-cvc-reg.pth",
+  "timestamp": "2026-08-11_14-06-21"
+}

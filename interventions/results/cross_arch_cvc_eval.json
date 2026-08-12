@@ -1,0 +1,102 @@
+{
+  "experiment": "Cross-architecture Fourier low-pass benchmark (CVC-ClinicDB)",
+  "cutoff": 0.25,
+  "img_size": 256,
+  "num_images": 123,
+  "device": "cuda",
+  "timestamp": "2026-08-12T18:31:56.947847",
+  "models": [
+    {
+      "name": "VM-UNet",
+      "family": "SSM",
+      "architecture": "vmunet",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\best-vmunet-cvc.pth",
+      "hooks": 30,
+      "clean": {
+        "dice": 0.895701213054301,
+        "iou": 0.8111040450670574,
+        "accuracy": 0.9817968849244156,
+        "sensitivity": 0.9307627195010437,
+        "specificity": 0.986475478382637
+      },
+      "lowpass": {
+        "dice": 0.29189011372638535,
+        "iou": 0.17088485704111703,
+        "accuracy": 0.8691517899676067,
+        "sensitivity": 0.3211410878181445,
+        "specificity": 0.9193910613428097
+      },
+      "delta_dice": -0.6038110993279155,
+      "delta_pct": -67.41211137453668
+    },
+    {
+      "name": "VM-UNet-TSA (Defense)",
+      "family": "SSM",
+      "architecture": "vmunet",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\interventions\\results\\best-vmunet-cvc-tsa-finetune\\best-vmunet-cvc.pth",
+      "hooks": 30,
+      "clean": {
+        "dice": 0.912191801542883,
+        "iou": 0.8385594104150733,
+        "accuracy": 0.9853091356230945,
+        "sensitivity": 0.9086733842197086,
+        "specificity": 0.992334772707728
+      },
+      "lowpass": {
+        "dice": 0.264388622891723,
+        "iou": 0.15233169497438076,
+        "accuracy": 0.882135406742251,
+        "sensitivity": 0.25222437080183713,
+        "specificity": 0.9398829495415422
+      },
+      "delta_dice": -0.64780317865116,
+      "delta_pct": -71.01611498313778
+    },
+    {
+      "name": "ResNet50-UNet",
+      "family": "CNN",
+      "architecture": "resnet50",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\unet_cvc_best_256.pth",
+      "hooks": 9,
+      "clean": {
+        "dice": 0.9319655402575453,
+        "iou": 0.8725987553643906,
+        "accuracy": 0.9885943653137703,
+        "sensitivity": 0.9302501133790197,
+        "specificity": 0.9939431161586648
+      },
+      "lowpass": {
+        "dice": 0.0,
+        "iou": 0.0,
+        "accuracy": 0.9160229442565422,
+        "sensitivity": 0.0,
+        "specificity": 1.0
+      },
+      "delta_dice": -0.9319655402575453,
+      "delta_pct": -99.9999999998927
+    },
+    {
+      "name": "Swin-UNETR",
+      "family": "ViT",
+      "architecture": "swinunetr",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\interventions\\results\\best-swinunetr-cvc-256\\best-swinunetr-cvc-256.pth",
+      "hooks": 8,
+      "clean": {
+        "dice": 0.7848140232710448,
+        "iou": 0.6458386109619302,
+        "accuracy": 0.9653130508050686,
+        "sensitivity": 0.7532311174074835,
+        "specificity": 0.9847558130795051
+      },
+      "lowpass": {
+        "dice": 0.6000474355173436,
+        "iou": 0.4286198338006455,
+        "accuracy": 0.9414256026105183,
+        "sensitivity": 0.523231988985616,
+        "specificity": 0.9797637999484019
+      },
+      "delta_dice": -0.18476658775370114,
+      "delta_pct": -23.542722514484733
+    }
+  ]
+}

@@ -66,6 +66,7 @@ Thumbs.db
 
 # ---- Logs ----------------------------------------------
 *.log
+interventions/logs/
 
 # ---- Phase 0 Temp Artifacts ----------------------------
 _phase0_self_ref/scratch_speed.py 

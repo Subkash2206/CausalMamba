@@ -1,0 +1,54 @@
+{
+  "experiment": "Input-space low-pass (blur) evaluation - CNN/ViT baselines",
+  "cutoff": 0.25,
+  "img_size": 256,
+  "num_images": 123,
+  "device": "cuda",
+  "timestamp": "2026-08-12T18:37:13.522578",
+  "models": [
+    {
+      "name": "ResNet50-UNet",
+      "family": "CNN",
+      "architecture": "resnet50",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\unet_cvc_best_256.pth",
+      "clean": {
+        "dice": 0.9319655402575453,
+        "iou": 0.8725987553643906,
+        "accuracy": 0.9885943653137703,
+        "sensitivity": 0.9302501133790197,
+        "specificity": 0.9939431161586648
+      },
+      "blurred": {
+        "dice": 0.7228051960075986,
+        "iou": 0.5659318325976362,
+        "accuracy": 0.9584015636909299,
+        "sensitivity": 0.6458364417157976,
+        "specificity": 0.9870561938354508
+      },
+      "delta_dice": -0.20916034424994667,
+      "delta_pct": -22.442926826663737
+    },
+    {
+      "name": "Swin-UNETR",
+      "family": "ViT",
+      "architecture": "swinunetr",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\interventions\\results\\best-swinunetr-cvc-256\\best-swinunetr-cvc-256.pth",
+      "clean": {
+        "dice": 0.7848140232710448,
+        "iou": 0.6458386109619302,
+        "accuracy": 0.9653130508050686,
+        "sensitivity": 0.7532311174074835,
+        "specificity": 0.9847558130795051
+      },
+      "blurred": {
+        "dice": 0.7814753189129229,
+        "iou": 0.6413290851160673,
+        "accuracy": 0.9648080221036586,
+        "sensitivity": 0.7493208338195951,
+        "specificity": 0.984562963544802
+      },
+      "delta_dice": -0.003338704358121891,
+      "delta_pct": -0.42541344307307005
+    }
+  ]
+}

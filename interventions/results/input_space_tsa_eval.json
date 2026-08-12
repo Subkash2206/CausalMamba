@@ -1,0 +1,50 @@
+{
+  "experiment": "Input-space low-pass (blur) evaluation - TSA defense",
+  "cutoff": 0.25,
+  "img_size": 256,
+  "num_images": 123,
+  "device": "cuda",
+  "timestamp": "2026-08-12T14:30:55.262711",
+  "models": [
+    {
+      "name": "Baseline VM-UNet",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\best-vmunet-cvc.pth",
+      "clean": {
+        "dice": 0.895701213054301,
+        "iou": 0.8111040450670574,
+        "accuracy": 0.9817968849244156,
+        "sensitivity": 0.9307627195010437,
+        "specificity": 0.986475478382637
+      },
+      "blurred": {
+        "dice": 0.8229772218637156,
+        "iou": 0.6992024599276067,
+        "accuracy": 0.968010879144436,
+        "sensitivity": 0.8854628153746382,
+        "specificity": 0.9755785316756038
+      },
+      "delta_dice": -0.07272399119058537,
+      "delta_pct": -8.119224371988805
+    },
+    {
+      "name": "TSA-Defense VM-UNet",
+      "checkpoint": "C:\\Users\\subka\\Documents\\mamba_1.1\\interventions\\results\\best-vmunet-cvc-tsa-finetune\\best-vmunet-cvc.pth",
+      "clean": {
+        "dice": 0.912191801542883,
+        "iou": 0.8385594104150733,
+        "accuracy": 0.9853091356230945,
+        "sensitivity": 0.9086733842197086,
+        "specificity": 0.992334772707728
+      },
+      "blurred": {
+        "dice": 0.8803341446769124,
+        "iou": 0.7862472008873449,
+        "accuracy": 0.9797268999301321,
+        "sensitivity": 0.8879874374568827,
+        "specificity": 0.9881371804829229
+      },
+      "delta_dice": -0.03185765686597064,
+      "delta_pct": -3.4924296416665452
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "experiment": "VM-UNet CVC-ClinicDB training + Targeted Spectral Augmentation (Phase 4.2)",
+  "model": "VM-UNet",
+  "depths": [
+    2,
+    2,
+    9,
+    2
+  ],
+  "depths_decoder": [
+    2,
+    9,
+    2,
+    2
+  ],
+  "dataset": "CVC-ClinicDB",
+  "img_size": 256,
+  "epochs": 15,
+  "batch_size": 2,
+  "accumulation_steps": 2,
+  "effective_batch_size": 4,
+  "lr": 0.0001,
+  "seed": 42,
+  "tsa": {
+    "augmentation": "targeted_spectral_lowpass",
+    "cutoff": 0.25,
+    "probability": 0.5,
+    "on": "train_only"
+  },
+  "fine_tuning": {
+    "from": "C:\\Users\\subka\\Documents\\mamba_1.1\\tta_boundary_study\\checkpoints\\best-vmunet-cvc.pth",
+    "strict": true,
+    "phase": "Phase 4.2 robustness fine-tuning"
+  },
+  "device": "cuda",
+  "checkpoint": "interventions\\results\\best-vmunet-cvc-tsa-finetune\\best-vmunet-cvc.pth",
+  "timestamp": "2026-08-12_10-34-34"
+}
