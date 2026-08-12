@@ -192,8 +192,14 @@ def evaluate(model, loader, device, needs_sigmoid, degrade=None, boundary=False)
                     pb = (p_np[i] >= 0.5).astype(bool)
                     gb = (g_np[i] >= 0.5).astype(bool)
                     if gb.sum() > 0:
+                        # BF1 handles empty predictions internally (returns 0.0).
                         bf1.append(boundary_f1(p_np[i], g_np[i], threshold=0.5, thickness=2))
-                        hd95.append(hausdorff_95(p_np[i], g_np[i], threshold=0.5))
+                        if pb.sum() > 0:
+                            hd95.append(hausdorff_95(p_np[i], g_np[i], threshold=0.5))
+                        else:
+                            # Empty prediction -> HD95 undefined. Record NaN and
+                            # drop from the mean via nanmean (no NaN propagation).
+                            hd95.append(np.nan)
             preds.append(p_np.ravel())
             gts.append(g_np.ravel())
     pooled = compute_segmentation_metrics(np.concatenate(preds), np.concatenate(gts))
@@ -202,7 +208,10 @@ def evaluate(model, loader, device, needs_sigmoid, degrade=None, boundary=False)
            'per_dice': per_dice}
     if boundary:
         res['boundary_f1_mean'] = float(np.mean(bf1)) if bf1 else float('nan')
-        res['hd95_mean'] = float(np.mean(hd95)) if hd95 else float('nan')
+        _hd = np.asarray(hd95, dtype=float)
+        res['hd95_mean'] = (float(np.nanmean(_hd))
+                            if _hd.size and not bool(np.isnan(_hd).all())
+                            else float('nan'))
     return res
 
 

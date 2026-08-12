@@ -48,10 +48,10 @@
 
 | Model | Clean BF1 | Clean HD95 | LP BF1 | LP HD95 |
 |---|---:|---:|---:|---:|
-| VM-UNet | 0.672 | 21.4 | 0.062 | nan |
+| VM-UNet | 0.672 | 21.4 | 0.062 | 93.9 |
 | VM-UNet-TSA | 0.756 | 17.5 | 0.081 | 86.4 |
-| ResNet50-UNet | 0.788 | nan | 0.000 | nan |
-| Swin-UNETR | 0.409 | 51.0 | 0.192 | nan |
+| ResNet50-UNet | 0.788 | 16.1 | 0.000 | nan |
+| Swin-UNETR | 0.409 | 51.0 | 0.192 | 75.9 |
 
 ## ISIC2018 — cross-architecture benchmark (feature-space vs input-space)
 
