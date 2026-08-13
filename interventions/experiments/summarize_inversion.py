@@ -58,8 +58,15 @@ def main():
         fam = m['family']
         isic_by_family.setdefault(fam, []).append(m)
 
+    def prefer_matched(rows):
+        """Pick the recipe-matched row (CVC-recipe CNN, Swin-UNETR) over legacy ones."""
+        for m in rows:
+            if 'CVC recipe' in m['name'] or 'Swin-UNETR' in m['name']:
+                return m
+        return rows[0] if rows else None
+
     print('=' * 100)
-    print(f"Cross-dataset inversion at feature-LP cutoff 0.25 | {cvc_src} "
+    print(f"Cross-dataset feature-spectral fragility at feature-LP cutoff 0.25 | {cvc_src} "
           f"| ISIC held-out n={isic['num_images']}")
     print('=' * 100)
     print(f"{'Architecture':<34}{'CVC clean':>10}{'CVC feat-LP':>12}{'CVC d%':>9}"
@@ -67,8 +74,8 @@ def main():
     print('-' * 100)
     for fam, cvc_m in cvc_by_family.items():
         isic_rows = isic_by_family.get(fam, [])
-        # pick the first non-standardized row as the primary ISIC entry
-        isic_primary = isic_rows[0] if isic_rows else None
+        # prefer the recipe-matched row (CVC-recipe CNN, Swin-UNETR) over legacy ones
+        isic_primary = prefer_matched(isic_rows)
         cvc_d = (cvc_m[lp_key]['dice'] - cvc_m[clean_key]['dice']) / (cvc_m[clean_key]['dice'] + 1e-12) * 100
         if isic_primary:
             isic_d = (isic_primary['feature_lp']['dice'] - isic_primary['clean']['dice']) / \
@@ -90,7 +97,7 @@ def main():
     print('Table-2 markdown rows (CVC clean->LP / ISIC clean->LP / leg status):')
     for fam, cvc_m in cvc_by_family.items():
         isic_rows = isic_by_family.get(fam, [])
-        isic_primary = isic_rows[0] if isic_rows else None
+        isic_primary = prefer_matched(isic_rows)
         cvc_d = (cvc_m[lp_key]['dice'] - cvc_m[clean_key]['dice']) / (cvc_m[clean_key]['dice'] + 1e-12) * 100
         cvc_str = f"{cvc_m[clean_key]['dice']:.3f} -> {cvc_m[lp_key]['dice']:.3f} ({cvc_d:+.1f}%)"
         if isic_primary:
