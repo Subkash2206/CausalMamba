@@ -60,6 +60,8 @@ def main():
     ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     ap.add_argument('--max_batches', type=int, default=None,
                     help='Smoke/timing: stop each epoch after N micro-batches.')
+    ap.add_argument('--max_epochs', type=int, default=None,
+                    help='Smoke/timing: stop after this many epochs.')
     ap.add_argument('--resume', default=None,
                     help='Full state file (*.pt) OR raw model weights (*.pth).')
     ap.add_argument('--resume_epoch', type=int, default=0,
@@ -129,6 +131,8 @@ def main():
     t_start = time.time()
     print(f'Training {EPOCHS} epochs (resume-from-epoch {start_epoch}) ...')
     for epoch in range(start_epoch, EPOCHS):
+        if args.max_epochs and epoch - start_epoch >= args.max_epochs:
+            break
         model.train()
         train_loss = 0.0
         optimizer.zero_grad()
