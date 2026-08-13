@@ -70,7 +70,20 @@ class ISICDataset(Dataset):
         return img, mask
 
 
+import argparse
+
 def main():
+    ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    ap.add_argument('--resume', default=None,
+                    help='Resume from a full state file (*.pt, saved every 5 epochs) OR raw '
+                         'model weights (*.pth).')
+    ap.add_argument('--resume_epoch', type=int, default=0,
+                    help='Number of already-completed epochs when --resume points to raw '
+                         'weights (scheduler + cosine position).')
+    ap.add_argument('--resume_best_val', type=float, default=float('inf'),
+                    help='Best val loss achieved before resume (raw-weights resume).')
+    args, _ = ap.parse_known_args()
+
     torch.manual_seed(SEED); np.random.seed(SEED)
     with open(SPLIT_JSON) as f:
         split = json.load(f)
@@ -85,11 +98,38 @@ def main():
     optimizer = Adam(model.parameters(), lr=LR)
     scheduler = CosineAnnealingLR(optimizer, T_max=EPOCHS)
     best_val_loss = float('inf')
+    start_epoch = 0
+
+    STATE_PATH = os.path.join(CKPT_DIR, 'unet_isic_cvcrecipe_state_latest.pt')
+    if args.resume:
+        sd = torch.load(args.resume, map_location=DEVICE)
+        if 'model_state_dict' in sd:
+            # Full state file written by this script (every 5 epochs).
+            model.load_state_dict(sd['model_state_dict'], strict=True)
+            optimizer.load_state_dict(sd['optimizer_state_dict'])
+            scheduler.load_state_dict(sd['scheduler_state_dict'])
+            start_epoch = sd['epoch']            # completed epochs -> next epoch = +1
+            best_val_loss = sd['best_val_loss']
+            print(f'[resume] full-state from {os.path.basename(args.resume)}: '
+                  f'resuming after epoch {start_epoch}, best_val {best_val_loss:.4f}')
+        else:
+            # Raw model weights (e.g., the epoch-32 best saved before resume support).
+            model.load_state_dict(sd if not isinstance(sd, dict) else
+                                  (sd.get('model_state_dict') or sd.get('state_dict') or sd),
+                                  strict=True)
+            for _ in range(args.resume_epoch):
+                scheduler.step()
+            start_epoch = args.resume_epoch
+            best_val_loss = args.resume_best_val
+            print(f'[resume] raw weights from {os.path.basename(args.resume)}: '
+                  f'resuming after epoch {start_epoch}, best_val {best_val_loss:.4f}, '
+                  f'lr now {scheduler.get_last_lr()[0]:.2e}')
 
     print(f'Training ISIC ResNet50-UNet (CVC recipe) {IMG_SIZE}px, {EPOCHS} epochs, '
-          f'train={len(train_ds)} val={len(val_ds)} on {DEVICE}')
+          f'train={len(train_ds)} val={len(val_ds)} on {DEVICE} '
+          f'| resume-from-epoch={start_epoch}')
     import time; t0 = time.time()
-    for epoch in range(EPOCHS):
+    for epoch in range(start_epoch, EPOCHS):
         model.train(); train_loss = 0.0
         for imgs, masks in train_loader:
             imgs, masks = imgs.to(DEVICE), masks.to(DEVICE)
@@ -106,6 +146,11 @@ def main():
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             torch.save(model.state_dict(), SAVE_PATH); ok = ' --> saved best'
+        if (epoch + 1) % 5 == 0:
+            torch.save({'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'scheduler_state_dict': scheduler.state_dict(),
+                        'epoch': epoch + 1, 'best_val_loss': best_val_loss}, STATE_PATH)
         el = (time.time() - t0) / 60
         print(f'Epoch {epoch+1:03d}/{EPOCHS} | Train {train_loss:.4f} | Val {val_loss:.4f} | {el:.1f}min{ok}')
     print(f'Done. Best val loss {best_val_loss:.4f} -> {SAVE_PATH}')
