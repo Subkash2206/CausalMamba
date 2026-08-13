@@ -55,8 +55,27 @@
 
 ## ISIC2018 — cross-architecture benchmark (feature-space vs input-space)
 
-| Architecture | Family | Clean | Feat-LP | Δ% | Input-LP | Δ% |
-|---|---|---:|---:|---:|---:|---:|
-| VM-UNet | SSM | 0.9506 | 0.9135 | -3.9% | 0.9552 | +0.5% |
-| ResNet50-UNet | CNN | 0.9473 | 0.9210 | -2.8% | 0.9381 | -1.0% |
-| Swin-UNet | ViT | 0.9483 | 0.3774 | -60.2% | 0.9412 | -0.7% |
+### Held-out test split (n=260, untouched — supersedes dev-50; `isic_heldout_eval.json`)
+| Architecture | Family | Clean | Feat-LP | Δ% | Input-LP | Δ% | Wilcoxon p |
+|---|---|---:|---:|---:|---:|---:|---:|
+| VM-UNet | SSM | 0.9151 | 0.8212 | −10.3% | 0.9089 | −0.7% | 1.1e-19 |
+| ResNet50-UNet (ISIC recipe) | CNN | 0.9091 | 0.8170 | −10.1% | 0.9049 | −0.5% | 9.6e-27 |
+| ResNet50-UNet (CVC recipe, matched) | CNN | 0.8917 | 0.8077 | −9.4% | 0.8874 | −0.5% | 1.9e-31 |
+| Swin-UNet | ViT | 0.9114 | 0.3058 | −66.5% | 0.8987 | −1.4% | 2.3e-44 |
+
+### Dev-50 convenience subset (first 50 sorted images — DO NOT USE for the paper)
+| Architecture | Family | Clean | Feat-LP | Δ% |
+|---|---|---:|---:|---:|
+| VM-UNet | SSM | 0.9506 | 0.9135 | −3.9% |
+| ResNet50-UNet | CNN | 0.9473 | 0.9210 | −2.8% |
+| Swin-UNet | ViT | 0.9483 | 0.3774 | −60.2% |
+
+## Cross-dataset inversion (headline, ρ=0.25 feature-LP)
+| Architecture | CVC Δ% | ISIC held-out Δ% | Leg status |
+|---|---:|---:|---|
+| ResNet50-UNet (CNN) | −100% | −9.4% | matched recipe |
+| VM-UNet (SSM) | −67.4% | −10.3% | CVC canonical; ISIC legacy VSSM |
+| Swin-UNETR / Swin-UNet (ViT) | −23.5% | −66.5% | different ViT architectures |
+
+Rank ordering inverts across datasets: on CVC, CNN ≥ SSM ≫ ViT in fragility; on ISIC,
+ViT ≫ SSM ≈ CNN. 6 of 260 test images overlap the dev-50 (random-chance level, ~5).

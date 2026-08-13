@@ -1,61 +1,52 @@
 # Plan Progress & Runbook — 2026-08-13
 
-## Status update (10:30 local — post-interruption recovery)
-- **System rebooted at 04:31** (Event 577/578, kernel-initiated reboot — likely Windows
-  Update) killed the first training run at epoch 46/100. Best checkpoint (epoch 32,
-  val loss 0.1156, saved 03:57) survived.
-- **Resumed training** at 10:30 from the epoch-32 best weights (fresh Adam at the correct
-  cosine position, lr 7.7e-5, best-val floor 0.1156). Runs epochs 33–100.
-  Log: `interventions/logs/train_unet_isic_cvcrecipe_resume.log` (+`_err.log`).
-  ~2.2–3.3 min/epoch → **expected completion ≈ 13:00–14:30 local**.
-- **Resume support added** (`b7a7281`): `--resume` (full state file OR raw weights),
-  `--resume_epoch`, `--resume_best_val`; full model+optimizer+scheduler state saved every
-  5 epochs to `interventions/checkpoints/unet_isic_cvcrecipe_state_latest.pt`.
-  Recovery from any future interruption is now one command:
-  ```
-  python interventions/train_unet_isic18_cvcrecipe.py --resume interventions/checkpoints/unet_isic_cvcrecipe_state_latest.pt
-  ```
-- Sleep timeouts are already 0 (never) on AC/DC — the reboot was not sleep-related.
+## Status update (14:30 local — post-training / post-eval)
+- **Training DONE 13:05**: CVC-recipe ISIC CNN ran epochs 33–100 from the epoch-32 resume
+  (best val loss **0.1106 at epoch 58**). Checkpoint:
+  `interventions/checkpoints/unet_isic_cvcrecipe_best.pth`.
+- **Held-out ISIC eval DONE 14:16**: all 4 models on the untouched 260-image test split →
+  `interventions/results/isic_heldout_eval.json`.
+  - **Headline change:** the earlier dev-50 "<4% CNN/SSM on ISIC" was a subset artifact.
+    On the held-out split: CNN −9.4% (matched recipe), SSM −10.3%, ViT −66.5%.
+  - The **rank-flip inversion holds**: CVC CNN(−100) > SSM(−67) > ViT(−24); ISIC
+    ViT(−66) ≫ SSM(−10) ≈ CNN(−9). All per-image effects Wilcoxon p < 1e-19.
+  - Skeleton (ISBI_SKELETON_v2.md) + robustness_report.md updated with held-out numbers;
+    dev-50 table retained only as a "DO NOT USE" reference.
+- **HD95 metric note:** tta_boundary_study's `hausdorff_95()` is a max-Hausdorff
+  (directed_hausdorff = 100th pct), despite the name. The held-out eval now uses an
+  EDT-based exact-equivalent (verified diff=0.0) that runs in microseconds — the
+  directed_hausdorff version took minutes per large ISIC lesion.
 
 ## Running now (or last state)
-- **ResNet50-UNet ISIC retrain (CVC recipe)** — resumed run, PID rotated; log
-  `interventions/logs/train_unet_isic_cvcrecipe_resume.log`.
-  Best checkpoint: `interventions/checkpoints/unet_isic_cvcrecipe_best.pth` (gitignored).
-- Held-out eval deferred until this finishes (GPU contention OOMs on the 6 GB card).
+- Nothing running; GPU idle. All Phase-2 deliverables complete.
 
 ## Delivered this session (commits)
 | Artifact | Path | Purpose |
 |---|---|---|
 | Held-out splits | `interventions/results/splits/{isic,cvc}_split.json` | ISIC 2075/259/260, CVC 489/61/62 (seed 42) |
-| Held-out ISIC eval | `interventions/experiments/eval_isic_heldout.py` | Phase-2 eval on untouched test split; `--models all\|existing\|standardized`; `--max_images N` smoke |
-| ISIC retrain (CNN) | `interventions/train_unet_isic18_cvcrecipe.py` | CVC recipe; **resume support** added |
+| Held-out ISIC eval | `interventions/experiments/eval_isic_heldout.py` | `--models all\|existing\|standardized`; `--max_images N`; fast EDT-HD95 |
+| Inversion summarizer | `interventions/experiments/summarize_inversion.py` | Table-2 rows + Wilcoxon from CVC + ISIC JSONs |
+| ISIC retrain (CNN) | `interventions/train_unet_isic18_cvcrecipe.py` | CVC recipe; resume support |
 | ISIC retrain (SSM, cloud) | `interventions/train_vmunet_isic18_cvcrecipe.py` | Canonical VSSM + CVC recipe — **needs cloud** |
 | Phase-0 audit | `interventions/results/PHASE0B_RECIPE_AUDIT.md` | VSSM divergence + CNN recipe mismatch |
-| ISBI skeleton v2 | `interventions/results/ISBI_SKELETON_v2.md` | 4-page skeleton, CNN-anchored inversion, 3 tables |
-| Cloud runbook | `interventions/CLOUD_RETRAIN.md` | Launch canonical VM-UNet ISIC retrain on ≥16 GB GPU |
+| ISBI skeleton v2 | `interventions/results/ISBI_SKELETON_v2.md` | 4-page skeleton, rank-flip inversion, held-out Table 2 |
+| Held-out results | `interventions/results/isic_heldout_eval.json` | Raw per-image + pooled numbers |
 
 ## Eval notes (do not repeat mistakes)
 - **Hook order:** clean pass must run BEFORE `attach_lp` (deterministic intervention →
   clean == feat if hooks attached first).
 - **ISIC images are ~29 MP:** pre-resize to 256 at load time or the loader OOMs.
-- **Contention:** eval OOMs/starves when concurrent with training on the 6 GB GPU. Run
-  only after training finishes.
+- **Contention:** eval OOMs/starves when concurrent with training on the 6 GB GPU.
+- **Slow HD95:** never use `directed_hausdorff` on full masks for large lesions (minutes
+  per image); use the EDT equivalent (`hd95_fast` in eval_isic_heldout.py).
 
-## Post-training steps (when resume log shows epoch 100)
-1. Confirm checkpoint + clean Dice:
-   ```powershell
-   Get-Content interventions/logs/train_unet_isic_cvcrecipe_resume.log | Select-Object -Last 3
-   Test-Path interventions/checkpoints/unet_isic_cvcrecipe_best.pth
-   ```
-2. Run the full held-out eval (GPU idle — ~20 min):
-   ```powershell
-   python interventions/experiments/eval_isic_heldout.py --models all
-   ```
-   → `interventions/results/isic_heldout_eval.json` (VM-UNet, ResNet50-ISIC-recipe,
-   ResNet50-CVC-recipe, Swin-UNet).
-3. Update ISBI_SKELETON_v2.md Table 2 ISIC column with held-out numbers; commit.
-4. Cloud decision: VM-UNet ISIC canonical retrain (CLOUD_RETRAIN.md) — critical path for
-   a matched SSM leg and the Phase-3 ViT decision.
+## Remaining before Oct 26
+1. **Cloud decision (blocked on you):** VM-UNet ISIC canonical retrain
+   (`interventions/train_vmunet_isic18_cvcrecipe.py` + `CLOUD_RETRAIN.md`) — closes the
+   SSM implementation caveat; enables the Phase-3 ViT decision.
+2. Optional: evaluate CVC models on the new carved CVC test split (62) to remove the
+   selection-on-test caveat from the CVC column of Table 2.
+3. Lock author list; assemble citations (10–12); render 300-dpi figures.
 
 ## Known blockers
 - VM-UNet ISIC canonical retrain infeasible locally (~3.5–4 h/epoch). Needs cloud.

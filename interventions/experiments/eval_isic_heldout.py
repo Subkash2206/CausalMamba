@@ -58,17 +58,33 @@ def load_isic_pairs(names):
     return pairs
 
 
+def hd95_fast(pred, target, threshold=0.5):
+    """Symmetric Hausdorff via EDT (O(N)) — EXACTLY equal to
+    max(directed_hausdorff(pred,target), directed_hausdorff(target,pred)),
+    i.e. the same metric as tta_boundary_study's hausdorff_95() (which is a
+    max-Hausdorff, not a true 95th percentile) but fast enough for large
+    masks (directed_hausdorff is O(N*M) and takes minutes per ISIC lesion).
+    """
+    from scipy.ndimage import distance_transform_edt
+    pred_bin = (pred > threshold).astype(bool)
+    target_bin = target.astype(bool)
+    if pred_bin.sum() == 0 or target_bin.sum() == 0:
+        return float('inf')
+    d_pred = distance_transform_edt(~target_bin)[pred_bin]
+    d_tgt = distance_transform_edt(~pred_bin)[target_bin]
+    return float(max(d_pred.max(), d_tgt.max()))
+
+
 def boundary_metrics_for(per_preds, per_gts):
     """BF1 + HD95 per-image (well-defined only when preds contain positive class)."""
-    from tta_boundary_study.src.metrics.boundary_metrics import (
-        boundary_f1, hausdorff_95)
+    from tta_boundary_study.src.metrics.boundary_metrics import boundary_f1
     bf1s, hd95s = [], []
     for p, g in zip(per_preds, per_gts):
         if p.max() == 0:
             bf1s.append(0.0); hd95s.append(np.inf)
             continue
         bf1s.append(boundary_f1(p, g))
-        hd95s.append(hausdorff_95(p, g))
+        hd95s.append(hd95_fast(p, g))
     return {'bf1_mean': float(np.nanmean(bf1s)), 'bf1_std': float(np.nanstd(bf1s)),
             'hd95_mean': float(np.nanmean([h for h in hd95s if np.isfinite(h)]))
                         if any(np.isfinite(h) for h in hd95s) else None,
