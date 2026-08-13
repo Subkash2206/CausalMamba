@@ -70,3 +70,7 @@ interventions/logs/
 
 # ---- Phase 0 Temp Artifacts ----------------------------
 _phase0_self_ref/scratch_speed.py 
+
+# ---- ISIC 256px tensor cache ----
+interventions/cache/
+

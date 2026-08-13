@@ -37,6 +37,36 @@ from interventions.masks import lowpass_mask
 
 SPLIT_JSON = os.path.join(_REPO, 'interventions', 'results', 'splits', 'isic_split.json')
 STD_RN50_CKPT = os.path.join(_REPO, 'interventions', 'checkpoints', 'unet_isic_cvcrecipe_best.pth')
+STD_SWINUNETR_CKPT = os.path.join(_REPO, 'interventions', 'checkpoints',
+                                  'swinunetr_isic_cvcrecipe_best.pth')
+
+
+def build_model_heldout(arch, ckpt, device):
+    """build_model plus the ISIC-trained MONAI Swin-UNETR (ViT leg closure)."""
+    if arch == 'swinunetr':
+        from src.models.swin_unetr_cvc import get_swin_unetr
+        model = get_swin_unetr().to(device)
+        sd = torch.load(ckpt, map_location=device)
+        if isinstance(sd, dict):
+            sd = sd.get('model_state_dict') or sd.get('state_dict') or sd
+        model.load_state_dict({k.replace('module.', ''): v for k, v in sd.items()}, strict=True)
+        model.eval()
+        return model
+    return build_model(arch, ckpt, device)
+
+
+def attach_lp_heldout(model, arch, interv):
+    """attach_lp plus the CVC-protocol Swin-UNETR hook layout (swinViT blocks)."""
+    if arch == 'swinunetr':
+        from interventions.experiments.cross_arch_cvc_eval import make_lp_hook
+        handles = []
+        swin = model.swinViT
+        for i in range(1, 5):
+            layer = getattr(swin, f'layers{i}')[0]
+            for blk in layer.blocks:
+                handles.append(blk.register_forward_hook(make_lp_hook(interv, nhwc=True)))
+        return handles
+    return attach_lp(model, arch, interv)
 
 
 def load_isic_pairs(names):
@@ -162,6 +192,9 @@ def main():
     if os.path.exists(STD_RN50_CKPT):
         STD_MODELS.append(('ResNet50-UNet (CVC recipe, standardized)', 'CNN', 'resnet50',
                            STD_RN50_CKPT, 256, True))
+    if os.path.exists(STD_SWINUNETR_CKPT):
+        STD_MODELS.append(('Swin-UNETR (CVC recipe, ViT leg closure)', 'ViT', 'swinunetr',
+                           STD_SWINUNETR_CKPT, 256, True))
     if args.models == 'existing':
         pass  # only repo checkpoints
     elif args.models == 'standardized':
@@ -182,12 +215,12 @@ def main():
 
     for name, family, arch, ckpt, size, needs_sigmoid in MODELS:
         print(f'\n--- {name} ({family}, {size}x{size}) ---')
-        model = build_model(arch, ckpt, device)
+        model = build_model_heldout(arch, ckpt, device)
 
         # Clean pass must run WITHOUT hooks (intervention is deterministic; attaching
         # hooks first would make clean == feat, silently killing the comparison).
         clean = evaluate_full(model, pairs, device, size, needs_sigmoid, 'clean')
-        handles = attach_lp(model, arch, interv_lp)
+        handles = attach_lp_heldout(model, arch, interv_lp)
         feat = evaluate_full(model, pairs, device, size, needs_sigmoid, 'feat')
         for h in handles:
             h.remove()

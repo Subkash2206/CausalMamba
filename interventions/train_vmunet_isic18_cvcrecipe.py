@@ -10,28 +10,32 @@ implementation and the exact CVC training recipe (from scratch, AdamW 1e-4 wd 1e
 BCE + soft-Dice, cosine, best-val-loss, seed 42). Only dataset + normalization
 (ImageNet, per the plan) differ from CVC.
 
-Feasibility note: at 256px, micro-batch 2 + accumulation 4 on the 6GB laptop GPU,
-the ISIC train split (~2,075 imgs) projects to roughly 3-4 h/epoch -> ~2-3 weeks
-for 100 epochs. This run is therefore intended for a cloud GPU (the plan's
-fallback). Script is self-contained: `python train_vmunet_isic18_cvcrecipe.py`.
+Local-run setup (2026-08-13): uses ISICCacheDataset (resized-256 tensors cached on
+disk + RAM) so the per-epoch 29MP JPEG decode cost is eliminated; cudnn.benchmark
+on; full-state resume every 5 epochs (crash-safe on a laptop that has rebooted).
+
+Usage:
+    python interventions/train_vmunet_isic18_cvcrecipe.py \
+        [--max_batches N] [--resume state.pt|best.pth] [--resume_epoch N] [--resume_best_val V]
 
 Output: interventions/checkpoints/vmunet_isic_cvcrecipe_best.pth
 """
 
-import sys, os, json, random, time
+import sys, os, json, argparse, time
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from PIL import Image
-import torchvision.transforms.functional as TF
 
 _REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 _SPECTRAL = os.path.join(_REPO, 'SpectralMamba')
 sys.path.insert(0, _SPECTRAL)
+sys.path.insert(0, _REPO)
+
+from interventions.isic_dataset import ISICCacheDataset
 
 IMG_DIR = os.path.join(_REPO, 'SpectralMamba', 'VM-UNet', 'data', 'isic18', 'train', 'images')
 MASK_DIR = os.path.join(_REPO, 'SpectralMamba', 'VM-UNet', 'data', 'isic18', 'train', 'masks')
@@ -39,41 +43,11 @@ SPLIT_JSON = os.path.join(_REPO, 'interventions', 'results', 'splits', 'isic_spl
 CKPT_DIR = os.path.join(_REPO, 'interventions', 'checkpoints')
 os.makedirs(CKPT_DIR, exist_ok=True)
 SAVE_PATH = os.path.join(CKPT_DIR, 'vmunet_isic_cvcrecipe_best.pth')
+STATE_PATH = os.path.join(CKPT_DIR, 'vmunet_isic_cvcrecipe_state_latest.pt')
 
 IMG_SIZE, EPOCHS, LR, SEED = 256, 100, 1e-4, 42
 MICRO_BATCH, ACC_STEPS = 2, 4           # effective batch 8, matching CVC recipe
 AMP, CHECKPOINTING = True, True
-
-
-class ISICDataset(Dataset):
-    """ISIC2018 with ImageNet normalization; CVC-style flip/rotate augmentation."""
-    def __init__(self, names, img_dir, mask_dir, img_size=256, is_train=True):
-        self.names, self.img_dir, self.mask_dir = names, img_dir, mask_dir
-        self.img_size, self.is_train = img_size, is_train
-
-    def __len__(self):
-        return len(self.names)
-
-    def __getitem__(self, idx):
-        name = self.names[idx]
-        base = os.path.splitext(name)[0]
-        img = Image.open(os.path.join(self.img_dir, name)).convert('RGB').resize(
-            (self.img_size, self.img_size), Image.BILINEAR)
-        mask = Image.open(os.path.join(self.mask_dir, base + '_segmentation.png')).convert('L').resize(
-            (self.img_size, self.img_size), Image.NEAREST)
-        if self.is_train:
-            if random.random() > 0.5:
-                img, mask = TF.hflip(img), TF.hflip(mask)
-            if random.random() > 0.5:
-                img, mask = TF.vflip(img), TF.vflip(mask)
-            if random.random() > 0.5:
-                angle = random.uniform(-30, 30)
-                img, mask = TF.rotate(img, angle), TF.rotate(mask, angle)
-        img = TF.to_tensor(img)
-        img = TF.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        mask = torch.from_numpy(np.array(mask)).float().unsqueeze(0) / 255.0
-        mask = (mask > 0.5).float()
-        return img, mask
 
 
 def soft_dice_loss(probs, masks, smooth=1.0):
@@ -83,19 +57,32 @@ def soft_dice_loss(probs, masks, smooth=1.0):
 
 
 def main():
-    random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
+    ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    ap.add_argument('--max_batches', type=int, default=None,
+                    help='Smoke/timing: stop each epoch after N micro-batches.')
+    ap.add_argument('--resume', default=None,
+                    help='Full state file (*.pt) OR raw model weights (*.pth).')
+    ap.add_argument('--resume_epoch', type=int, default=0,
+                    help='Completed epochs when --resume points to raw weights.')
+    ap.add_argument('--resume_best_val', type=float, default=float('inf'))
+    args, _ = ap.parse_known_args()
+
+    np.random.seed(SEED); torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
+        torch.backends.cudnn.benchmark = True
 
     from models.vmunet.vmunet import VMUNet  # canonical VSSM (vectorized scan)
 
     with open(SPLIT_JSON) as f:
         split = json.load(f)
-    train_ds = ISICDataset(split['train'], IMG_DIR, MASK_DIR, is_train=True)
-    val_ds = ISICDataset(split['val'], IMG_DIR, MASK_DIR, is_train=False)
+    train_ds = ISICCacheDataset(split['train'], IMG_DIR, MASK_DIR, is_train=True,
+                                cache_name='train')
+    val_ds = ISICCacheDataset(split['val'], IMG_DIR, MASK_DIR, is_train=False,
+                              cache_name='val')
     train_loader = DataLoader(train_ds, batch_size=MICRO_BATCH, shuffle=True,
-                              num_workers=2, drop_last=True)
-    val_loader = DataLoader(val_ds, batch_size=1, shuffle=False)
+                              num_workers=0, drop_last=True)
+    val_loader = DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=0)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = VMUNet(num_classes=1, input_channels=3,
@@ -117,9 +104,31 @@ def main():
     autocast = torch.cuda.amp.autocast(enabled=AMP)
 
     best_val_loss = float('inf')
+    start_epoch = 0
+    if args.resume:
+        sd = torch.load(args.resume, map_location=device)
+        if 'model_state_dict' in sd:
+            model.load_state_dict(sd['model_state_dict'], strict=True)
+            optimizer.load_state_dict(sd['optimizer_state_dict'])
+            scheduler.load_state_dict(sd['scheduler_state_dict'])
+            start_epoch = sd['epoch']
+            best_val_loss = sd['best_val_loss']
+            print(f'[resume] full-state from {os.path.basename(args.resume)}: '
+                  f'after epoch {start_epoch}, best_val {best_val_loss:.4f}')
+        else:
+            model.load_state_dict(sd if not isinstance(sd, dict) else
+                                  (sd.get('model_state_dict') or sd.get('state_dict') or sd),
+                                  strict=True)
+            for _ in range(args.resume_epoch):
+                scheduler.step()
+            start_epoch = args.resume_epoch
+            best_val_loss = args.resume_best_val
+            print(f'[resume] raw weights from {os.path.basename(args.resume)}: '
+                  f'after epoch {start_epoch}, best_val {best_val_loss:.4f}')
+
     t_start = time.time()
-    print(f'Training {EPOCHS} epochs ...')
-    for epoch in range(1, EPOCHS + 1):
+    print(f'Training {EPOCHS} epochs (resume-from-epoch {start_epoch}) ...')
+    for epoch in range(start_epoch, EPOCHS):
         model.train()
         train_loss = 0.0
         optimizer.zero_grad()
@@ -134,7 +143,9 @@ def main():
                 scaler.step(optimizer)
                 scaler.update()
                 optimizer.zero_grad()
-        train_loss /= len(train_loader)
+            if args.max_batches and batch_idx >= args.max_batches:
+                break
+        train_loss /= max(len(train_loader), 1)
 
         model.eval()
         val_loss = val_dice = 0.0
@@ -148,8 +159,8 @@ def main():
                 inter = (pred * masks).sum().item()
                 union = pred.sum().item() + masks.sum().item()
                 val_dice += 2 * inter / max(union, 1e-8)
-        val_loss /= len(val_loader)
-        val_dice /= len(val_loader)
+        val_loss /= max(len(val_loader), 1)
+        val_dice /= max(len(val_loader), 1)
         scheduler.step()
 
         saved = ''
@@ -157,8 +168,13 @@ def main():
             best_val_loss = val_loss
             torch.save(model.state_dict(), SAVE_PATH)
             saved = ' --> Saved best'
+        if (epoch + 1) % 5 == 0:
+            torch.save({'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'scheduler_state_dict': scheduler.state_dict(),
+                        'epoch': epoch + 1, 'best_val_loss': best_val_loss}, STATE_PATH)
         el = (time.time() - t_start) / 3600
-        print(f'Epoch {epoch:03d}/{EPOCHS} | Train {train_loss:.4f} | '
+        print(f'Epoch {epoch+1:03d}/{EPOCHS} | Train {train_loss:.4f} | '
               f'Val {val_loss:.4f} | Dice {val_dice:.4f} | {el:.1f}h{saved}')
     print(f'Done. Best val loss {best_val_loss:.4f} -> {SAVE_PATH}')
 
