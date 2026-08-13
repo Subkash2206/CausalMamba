@@ -12,6 +12,10 @@
     ViT(−66) ≫ SSM(−10) ≈ CNN(−9). All per-image effects Wilcoxon p < 1e-19.
   - Skeleton (ISBI_SKELETON_v2.md) + robustness_report.md updated with held-out numbers;
     dev-50 table retained only as a "DO NOT USE" reference.
+- **CVC held-out eval DONE 14:40** (`eval_cvc_heldout.py`, n=62 test frames):
+  CNN −100%, SSM −73.2%, ViT −30.9% — same ranking as the 123-val. **Table 2 now has
+  both columns on genuine held-out splits** (CVC 62, ISIC 260); the selection-on-test
+  caveat is removed from the headline.
 - **HD95 metric note:** tta_boundary_study's `hausdorff_95()` is a max-Hausdorff
   (directed_hausdorff = 100th pct), despite the name. The held-out eval now uses an
   EDT-based exact-equivalent (verified diff=0.0) that runs in microseconds — the

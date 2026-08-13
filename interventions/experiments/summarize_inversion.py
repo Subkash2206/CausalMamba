@@ -15,7 +15,8 @@ import sys, os, json
 import numpy as np
 
 _REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-CVC_JSON = os.path.join(_REPO, 'interventions', 'results', 'cross_arch_cvc_eval.json')
+CVC_VAL_JSON = os.path.join(_REPO, 'interventions', 'results', 'cross_arch_cvc_eval.json')
+CVC_HELDOUT_JSON = os.path.join(_REPO, 'interventions', 'results', 'cvc_heldout_eval.json')
 ISIC_JSON = os.path.join(_REPO, 'interventions', 'results', 'isic_heldout_eval.json')
 
 
@@ -31,7 +32,18 @@ def wilcoxon(a, b):
 
 
 def main():
-    cvc = json.load(open(CVC_JSON))
+    # Prefer the CVC held-out test eval (62) for the headline inversion; fall back to
+    # the 123-val cross-arch benchmark if the held-out file is missing.
+    if os.path.exists(CVC_HELDOUT_JSON):
+        cvc = json.load(open(CVC_HELDOUT_JSON))
+        cvc_src = 'CVC held-out test (62)'
+        lp_key = 'feature_lp'
+        clean_key = 'clean'
+    else:
+        cvc = json.load(open(CVC_VAL_JSON))
+        cvc_src = 'CVC validation (123)'
+        lp_key = 'lowpass'
+        clean_key = 'clean'
     isic = json.load(open(ISIC_JSON))
 
     # Map model family -> CVC entry by name.
@@ -47,7 +59,7 @@ def main():
         isic_by_family.setdefault(fam, []).append(m)
 
     print('=' * 100)
-    print(f"Cross-dataset inversion at feature-LP cutoff 0.25 | CVC n={cvc['num_images']} "
+    print(f"Cross-dataset inversion at feature-LP cutoff 0.25 | {cvc_src} "
           f"| ISIC held-out n={isic['num_images']}")
     print('=' * 100)
     print(f"{'Architecture':<34}{'CVC clean':>10}{'CVC feat-LP':>12}{'CVC d%':>9}"
@@ -57,15 +69,15 @@ def main():
         isic_rows = isic_by_family.get(fam, [])
         # pick the first non-standardized row as the primary ISIC entry
         isic_primary = isic_rows[0] if isic_rows else None
-        cvc_d = (cvc_m['lowpass']['dice'] - cvc_m['clean']['dice']) / (cvc_m['clean']['dice'] + 1e-12) * 100
+        cvc_d = (cvc_m[lp_key]['dice'] - cvc_m[clean_key]['dice']) / (cvc_m[clean_key]['dice'] + 1e-12) * 100
         if isic_primary:
             isic_d = (isic_primary['feature_lp']['dice'] - isic_primary['clean']['dice']) / \
                      (isic_primary['clean']['dice'] + 1e-12) * 100
-            print(f"{cvc_m['name']:<34}{cvc_m['clean']['dice']:>10.3f}{cvc_m['lowpass']['dice']:>12.3f}"
+            print(f"{cvc_m['name']:<34}{cvc_m[clean_key]['dice']:>10.3f}{cvc_m[lp_key]['dice']:>12.3f}"
                   f"{cvc_d:>+9.1f}{isic_primary['clean']['dice']:>11.3f}"
                   f"{isic_primary['feature_lp']['dice']:>13.3f}{isic_d:>+9.1f}  {isic_primary['name'][:30]}")
         else:
-            print(f"{cvc_m['name']:<34}{cvc_m['clean']['dice']:>10.3f}{cvc_m['lowpass']['dice']:>12.3f}"
+            print(f"{cvc_m['name']:<34}{cvc_m[clean_key]['dice']:>10.3f}{cvc_m[lp_key]['dice']:>12.3f}"
                   f"{cvc_d:>+9.1f}{'(no ISIC row)':>33}")
 
     print()
@@ -79,8 +91,8 @@ def main():
     for fam, cvc_m in cvc_by_family.items():
         isic_rows = isic_by_family.get(fam, [])
         isic_primary = isic_rows[0] if isic_rows else None
-        cvc_d = (cvc_m['lowpass']['dice'] - cvc_m['clean']['dice']) / (cvc_m['clean']['dice'] + 1e-12) * 100
-        cvc_str = f"{cvc_m['clean']['dice']:.3f} -> {cvc_m['lowpass']['dice']:.3f} ({cvc_d:+.1f}%)"
+        cvc_d = (cvc_m[lp_key]['dice'] - cvc_m[clean_key]['dice']) / (cvc_m[clean_key]['dice'] + 1e-12) * 100
+        cvc_str = f"{cvc_m[clean_key]['dice']:.3f} -> {cvc_m[lp_key]['dice']:.3f} ({cvc_d:+.1f}%)"
         if isic_primary:
             isic_d = (isic_primary['feature_lp']['dice'] - isic_primary['clean']['dice']) / \
                      (isic_primary['clean']['dice'] + 1e-12) * 100

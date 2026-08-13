@@ -70,12 +70,20 @@
 | ResNet50-UNet | CNN | 0.9473 | 0.9210 | −2.8% |
 | Swin-UNet | ViT | 0.9483 | 0.3774 | −60.2% |
 
-## Cross-dataset inversion (headline, ρ=0.25 feature-LP)
-| Architecture | CVC Δ% | ISIC held-out Δ% | Leg status |
+## Cross-dataset inversion (headline, ρ=0.25 feature-LP; both on carved held-out splits)
+| Architecture | CVC held-out (62) Δ% | ISIC held-out (260) Δ% | Leg status |
 |---|---:|---:|---|
-| ResNet50-UNet (CNN) | −100% | −9.4% | matched recipe |
-| VM-UNet (SSM) | −67.4% | −10.3% | CVC canonical; ISIC legacy VSSM |
-| Swin-UNETR / Swin-UNet (ViT) | −23.5% | −66.5% | different ViT architectures |
+| ResNet50-UNet (CNN) | −100% (0.960→0.000) | −9.4% (0.892→0.808) | matched recipe |
+| VM-UNet (SSM) | −73.2% (0.913→0.245) | −10.3% (0.915→0.821) | CVC canonical; ISIC legacy VSSM |
+| Swin-UNETR / Swin-UNet (ViT) | −30.9% (0.824→0.569) | −66.5% (0.911→0.306) | different ViT architectures |
 
 Rank ordering inverts across datasets: on CVC, CNN ≥ SSM ≫ ViT in fragility; on ISIC,
-ViT ≫ SSM ≈ CNN. 6 of 260 test images overlap the dev-50 (random-chance level, ~5).
+ViT ≫ SSM ≈ CNN. 6 of 260 ISIC test images overlap the dev-50 (random-chance level, ~5).
+
+### CVC held-out eval detail (62 test frames; `cvc_heldout_eval.json`)
+| Architecture | Family | Clean | Feat-LP | Δ% | Input-LP | Δ% |
+|---|---|---:|---:|---:|---:|---:|
+| VM-UNet | SSM | 0.9125 | 0.2445 | −73.2% | 0.8556 | −6.2% |
+| VM-UNet-TSA | SSM | 0.9421 | 0.2523 | −73.2% | 0.9314 | −1.1% |
+| ResNet50-UNet | CNN | 0.9598 | 0.0000 | −100% | 0.7683 | −20.0% |
+| Swin-UNETR | ViT | 0.8239 | 0.5690 | −30.9% | 0.8172 | −0.8% |

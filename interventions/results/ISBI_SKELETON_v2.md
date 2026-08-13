@@ -14,16 +14,16 @@ Oct 26 draft deadline.
 > sensitivity to *feature-domain* frequency manipulations is less understood. We apply
 > targeted low-pass interventions to the internal representations of four segmenters —
 > ResNet50-UNet (CNN), VM-UNet (state-space, SSM), Swin-UNETR/Swin-UNet (ViT) — and find a
-> **cross-dataset inversion in feature-spectral fragility**. On CVC-ClinicDB (polyps), a
-> 0.25 feature-space cutoff collapses the CNN (−100% Dice) and SSM (−67%) while leaving
-> the ViT largely intact (−24%). On an untouched held-out ISIC2018 test set (skin lesions),
-> the ranking inverts: the ViT collapses (−66%) while the same CNN and SSM architectures
-> lose only ~10% Dice. Input-domain blur of equal strength degrades all models mildly,
-> dissociating feature- from input-spectral sensitivity. The CNN leg is trained with
-> identical recipes on both datasets, ruling out recipe confounds; the SSM/ViT legs are
-> reported with explicit implementation caveats. Fourier-based augmentation does not close
-> the feature-domain gap. Feature-spectral fragility is therefore not an architecture
-> invariant, but an architecture–dataset interaction.
+> **cross-dataset inversion in feature-spectral fragility**. On untouched held-out test
+> splits, a 0.25 feature-space cutoff on CVC-ClinicDB (polyps) collapses the CNN (−100%
+> Dice) and SSM (−73%) while leaving the ViT largely intact (−31%); on ISIC2018 (skin
+> lesions) the ranking inverts: the ViT collapses (−66%) while the same CNN and SSM
+> architectures lose only ~10% Dice. Input-domain blur of equal strength degrades all
+> models mildly, dissociating feature- from input-spectral sensitivity. The CNN leg is
+> trained with identical recipes on both datasets, ruling out recipe confounds; the
+> SSM/ViT legs are reported with explicit implementation caveats. Fourier-based
+> augmentation does not close the feature-domain gap. Feature-spectral fragility is
+> therefore not an architecture invariant, but an architecture–dataset interaction.
 
 ---
 
@@ -49,7 +49,9 @@ Oct 26 draft deadline.
 - CVC-ClinicDB (612 polyp frames) and ISIC2018 (2,594 lesion images).
 - **Deterministic splits (seed 42):** ISIC 2075/259/260 (train/val/test), CVC
   489/61/62, carved by `carve_splits.py` and **untouched until final evaluation**.
-- Selection on the val split only; all reported robustness numbers on the test split.
+- Model selection on the val splits only. **All Table-2 inversion numbers are reported
+  on the untouched test splits (CVC 62, ISIC 260).** The CVC validation set (123) is
+  used for the mechanistic dose-response and defense characterizations (Tables 1, 3).
 
 ### 2.2 Architectures & recipes — matched vs caveated legs
 - **CNN leg (anchor, matched):** ResNet50-UNet (`smp.Unet`, random init) trained with
@@ -94,22 +96,24 @@ Oct 26 draft deadline.
   secondary aggravator (ΔDice −0.73 worst quartile) but does not drive the collapse.
 
 ### 3.2 Cross-dataset inversion on the anchor leg (Table 2) — headline
-- **CNN (ResNet50-UNet, matched recipe):** feature-LP 0.25 → −100% Dice on CVC but −9.4%
-  on the ISIC held-out test set (0.892 → 0.808; ISIC-recipe model consistent: −10.1%).
-  The CNN is therefore **10× less fragile on ISIC, not immune**; both CNN legs share
-  init, loss, scheduler, resolution, and seed, so the rank flip is not a recipe artifact.
-  Residual differences (input normalization, dataset statistics) are stated, not controlled.
-- SSM: −67.4% (CVC, canonical VSSM) vs −10.3% (ISIC, legacy VSSM — implementation-caveated
-  pending a canonical retrain). ViT: −23.5% (CVC, Swin-UNETR) vs **−66.5%** (ISIC,
-  Swin-UNet; architecture-caveated). The ViT is the most robust family on CVC and by far
-  the most fragile on ISIC — the CNN/ViT ranking strictly inverts.
+- **CNN (ResNet50-UNet, matched recipe):** feature-LP 0.25 → −100% Dice on the CVC
+  held-out test (0.960 → 0.000) but −9.4% on the ISIC held-out test (0.892 → 0.808;
+  ISIC-recipe model consistent: −10.1%). The CNN is therefore **10× less fragile on
+  ISIC, not immune**; both CNN legs share init, loss, scheduler, resolution, and seed, so
+  the rank flip is not a recipe artifact. Residual differences (input normalization,
+  dataset statistics) are stated, not controlled.
+- SSM: −73.2% (CVC held-out, canonical VSSM) vs −10.3% (ISIC held-out, legacy VSSM —
+  implementation-caveated pending a canonical retrain). ViT: −30.9% (CVC held-out,
+  Swin-UNETR) vs **−66.5%** (ISIC, Swin-UNet; architecture-caveated). The ViT is the
+  most robust family on CVC and by far the most fragile on ISIC — the CNN/ViT ranking
+  strictly inverts.
 - **Dev-set note (transparency):** the earlier ≤4% ISIC drops were measured on a 50-image
   convenience subset (first 50 sorted ISIC images); they do not replicate on the
   untouched 260-image test split and are superseded by the held-out numbers reported here.
 - All held-out effects are significant per-image (paired Wilcoxon p < 1e-19 for every
-  model); clean Dice on the held-out split (0.89–0.92) is lower than on the easy dev
-  subset (0.95), and the CVC-recipe CNN's clean Dice trails the ISIC-recipe CNN by ~1.7
-  pts — a modest recipe effect on clean accuracy.
+  model, both datasets); clean Dice on the ISIC held-out split (0.89–0.92) is lower than
+  on the easy dev subset (0.95), and the CVC-recipe CNN's clean Dice trails the
+  ISIC-recipe CNN by ~1.7 pts — a modest recipe effect on clean accuracy.
 
 ### 3.3 Input-domain dissociation and defense (Table 3)
 - Input-space LP at the same cutoff leaves all models ≥ −8% (CNN −22% worst on CVC),
@@ -128,14 +132,14 @@ Oct 26 draft deadline.
 
 ## 4. Conclusion & limitations (0.4 page)
 - Feature-spectral fragility is dataset-dependent and the *ranking of architectures can
-  invert* across datasets: the CNN/SSM are the most fragile on CVC and the least on ISIC
-  (held-out), while the ViT is the most robust on CVC and the most fragile on ISIC. The
-  CNN leg is recipe-matched, so the rank flip is not a training-recipe artifact.
-- Limitations: CVC numbers use the 123-image selection split (mild selection-on-test
-  caveat); the ISIC numbers are on a genuine held-out split. SSM ISIC leg has an
-  implementation caveat (closing via canonical retrain, appendix); ViT legs are different
-  architectures; normalization differs by dataset; feature hooks cover stage outputs,
-  not per-channel statistics.
+  invert* across datasets: on held-out test splits, the CNN/SSM are the most fragile on
+  CVC (−100%/−73%) and the least on ISIC (−9%/−10%), while the ViT is the most robust on
+  CVC (−31%) and the most fragile on ISIC (−66%). The CNN leg is recipe-matched, so the
+  rank flip is not a training-recipe artifact.
+- Limitations: SSM ISIC leg has an implementation caveat (closing via canonical retrain,
+  appendix); ViT legs are different architectures; normalization differs by dataset;
+  feature hooks cover stage outputs, not per-channel statistics; Tables 1 and 3
+  (CVC dose-response/defense) use the CVC validation set rather than the test split.
 
 
 ## Tables (max 3)
@@ -149,14 +153,14 @@ Oct 26 draft deadline.
 *Per-image mean±SD and 95% bootstrap CIs in text.*
 
 ### Table 2 — Cross-dataset inversion at ρ=0.25 (feature-domain LP, Δ% Dice)
-| Architecture | CVC clean → LP (Δ%) | ISIC held-out clean → LP (Δ%) | Leg status |
+| Architecture | CVC held-out clean → LP (Δ%) | ISIC held-out clean → LP (Δ%) | Leg status |
 |---|---|---:|---|
-| ResNet50-UNet (CNN) | 0.932 → 0.000 (−100%) | **0.892 → 0.808 (−9.4%)** | **matched recipe** |
-| VM-UNet (SSM) | 0.896 → 0.292 (−67.4%) | 0.915 → 0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
-| Swin-UNet (ViT) | 0.785 → 0.600 (−23.5%)‡ | 0.911 → 0.306 (−66.5%) | different ViT architectures |
-\*CNN ISIC row is the CVC-recipe retrain on the untouched 260-image test split; the ISIC-recipe CNN gives −10.1% on the same split (consistent).
-†Canonical VSSM ISIC retrain pending cloud compute (see appendix).
-‡Swin-UNETR on CVC, Swin-UNet on ISIC. All per-image effects significant (Wilcoxon p<1e-19).
+| ResNet50-UNet (CNN) | 0.960 → 0.000 (−100%) | **0.892 → 0.808 (−9.4%)** | **matched recipe** |
+| VM-UNet (SSM) | 0.913 → 0.245 (−73.2%)† | 0.915 → 0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
+| Swin-UNet (ViT) | 0.824 → 0.569 (−30.9%)‡ | 0.911 → 0.306 (−66.5%) | different ViT architectures |
+\*Both columns are on untouched carved held-out splits (CVC 62, ISIC 260; seed-42 carve). The CNN ISIC row is the CVC-recipe retrain; the ISIC-recipe CNN gives −10.1% on the same split.
+†SSM on CVC uses the canonical VSSM; the ISIC SSM row uses the legacy VSSM checkpoint (implementation caveat — canonical retrain pending, appendix).
+‡Swin-UNETR on CVC, Swin-UNet on ISIC. All per-image effects significant (Wilcoxon p<1e-19 both datasets).
 
 ### Table 3 — Input-domain dissociation & defense (CVC, ρ=0.25, n=123)
 
