@@ -162,7 +162,13 @@ Oct 26 draft deadline.
 †SSM on CVC uses the canonical VSSM; the ISIC SSM row uses the legacy VSSM checkpoint (implementation caveat — canonical retrain pending, appendix).
 ‡Swin-UNETR on CVC, Swin-UNet on ISIC. All per-image effects significant (Wilcoxon p<1e-19 both datasets).
 
-### Table 3 — Input-domain dissociation & defense (CVC, ρ=0.25, n=123)
+### Table 3 — Input-domain dissociation & defense (CVC validation, ρ=0.25, n=123)
+| Model | Clean | Input-LP | Feat-LP | Δ% feat | BF1 clean→LP | HD95 clean→LP |
+|---|---:|---:|---:|---:|---:|---:|
+| ResNet50-UNet (CNN) | 0.932 | 0.723 | 0.000 | −100% | 0.788→0.000 | — (undefined) |
+| VM-UNet (SSM) | 0.896 | 0.823 | 0.292 | −67.4% | 0.672→0.062 | 21.4→93.9 |
+| VM-UNet-TSA | 0.912 | 0.880 | 0.264 | −71.0% | 0.756→0.081 | 17.5→86.4 |
+| Swin-UNETR (ViT) | 0.785 | 0.781 | 0.600 | −23.5% | 0.409→0.192 | 51.0→75.9 |
 
 ## Figures (2, 300 dpi)
 - **Fig 1:** dose-response curves (Dice vs ρ) per architecture on CVC; annotated onset.
@@ -196,13 +202,7 @@ Oct 26 draft deadline.
    on the held-out split (clean 0.892, feat-LP −9.4%).
 3. Cloud decision for the SSM canonical retrain (critical path for a second matched leg
    and the Phase-3 ViT decision).
-4. Optional: evaluate CVC models on the new carved CVC test split (62) to remove the
-   selection-on-test caveat from the CVC column.
+4. ✅ CVC held-out eval (n=62) — DONE 2026-08-13: CNN −100%, SSM −73.2%, ViT −30.9%;
+   Table 2 now has both columns on genuine held-out splits.
 5. Lock author list; assemble citations (10–12); render 300-dpi figures.
 
-| Model | Clean | Input-LP | Feat-LP | Δ% feat | BF1 clean→LP | HD95 clean→LP |
-|---|---:|---:|---:|---:|---:|---:|
-| ResNet50-UNet (CNN) | 0.932 | 0.723 | 0.000 | −100% | 0.788→0.000 | — (undefined) |
-| VM-UNet (SSM) | 0.896 | 0.823 | 0.292 | −67.4% | 0.672→0.062 | 21.4→93.9 |
-| VM-UNet-TSA | 0.912 | 0.880 | 0.264 | −71.0% | 0.756→0.081 | 17.5→86.4 |
-| Swin-UNETR (ViT) | 0.785 | 0.781 | 0.600 | −23.5% | 0.409→0.192 | 51.0→75.9 |
