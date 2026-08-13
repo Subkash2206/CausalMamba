@@ -201,14 +201,15 @@ Oct 26 draft deadline.
 10. Wang et al., *Pan-cancer segmentation: robustness across datasets* (dataset shifts).
 11. ISIC2018 challenge; Jha et al., CVC-ClinicDB (dataset refs).
 
-## Appendix A — VM-UNet ISIC canonical retrain (running locally, CVC-matched subset)
+## Appendix A — VM-UNet ISIC canonical retrain (deferred; optional)
 - Script: `interventions/train_vmunet_isic18_cvcrecipe.py --subset 490` (canonical VSSM +
   CVC recipe, from scratch, 100 ep, seed 42, eff-batch 8, AMP + checkpointing, cached ISIC
-  dataset, resume state every 5 epochs). **Running locally since 2026-08-13 18:39**;
-  ~42 min/epoch → ~3 days for 100 epochs. The 490-image subset mirrors the CVC leg's
-  489-image training volume exactly while keeping the full 100-epoch cosine recipe
-  (methods: "the ISIC SSM was trained on a CVC-matched 490-image subset").
-  Log: `interventions/logs/train_vmunet_isic_cvcrecipe.log`. Resume after interruption:
+  dataset, resume state every 5 epochs). **Deferred 2026-08-13** (laptop required for other
+  work). The ISIC SSM row is reported with the legacy VSSM checkpoint (−10.3%, held-out
+  n=260) and footnoted accordingly; the two VSSM implementations agree to 0.906 feature
+  similarity, so the legacy value is expected to be representative. If needed before
+  camera-ready, run on a rented GPU (half a day) or a laptop GPU gap (~3 days), then rerun
+  `eval_isic_heldout.py --models all`. Resume:
   `python interventions/train_vmunet_isic18_cvcrecipe.py --subset 490 --resume
   interventions/checkpoints/vmunet_isic_cvcrecipe_state_latest.pt`.
   Checkpoint → `interventions/checkpoints/vmunet_isic_cvcrecipe_best.pth`.
@@ -223,7 +224,7 @@ Oct 26 draft deadline.
    evaluated on the held-out split: clean 0.890, feat-LP **−0.6%**. The legacy Swin-UNet's
    −66.5% is architecture-specific, not transformer-general. Table 2 updated.
 4. ✅ CVC held-out eval (n=62) — DONE 2026-08-13: CNN −100%, SSM −73.2%, ViT −30.9%.
-5. **Running:** VM-UNet ISIC canonical retrain on the CVC-matched 490-image subset
-   (appendix A) — ~3 days; replaces the legacy-VSSM ISIC SSM row when done.
+5. **Deferred/optional:** VM-UNet ISIC canonical retrain (appendix A) — run only if a
+   reviewer asks; the paper ships with the ISIC SSM legacy-VSSM caveat footnoted.
 6. Lock author list; assemble citations (10–12); render 300-dpi figures.
 

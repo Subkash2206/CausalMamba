@@ -1,27 +1,26 @@
 # Plan Progress & Runbook — 2026-08-13
 
-## Status update (18:45 local — ViT leg closed, SSM leg running CVC-matched subset)
+## Status update (19:00 local — SSM retrain KILLED by decision; paper ships with caveat)
 - **ViT leg CLOSED 17:30**: Swin-UNETR trained on ISIC (CVC recipe, 100 ep, 2.3 h, best
   val loss 0.1339) and evaluated on the held-out test: clean 0.890, feat-LP **−0.6%**
-  (p=9.4e-12). **Headline change:** the legacy Swin-UNet's −66.5% is architecture-specific,
-  not transformer-general. With all legs matched there is **no cross-dataset inversion**:
+  (p=9.4e-12). The legacy Swin-UNet's −66.5% is architecture-specific, not
+  transformer-general. With matched CNN + ViT legs there is **no cross-dataset inversion**:
   ordering is CNN > SSM > ViT on BOTH datasets, and every family is more fragile on CVC
-  (CNN 10.6×, SSM 7.1×, ViT 52×). Skeleton/report/summarizer reframed accordingly.
-- **SSM leg RUNNING 18:39 — user decision: CVC-matched 490-image subset (~3 days).**
-  Rationale: 8–15 epochs was rejected (LR still 95% of peak at ep 15; recreates the
-  recipe confound); a 490-image subset keeps the full 100-epoch cosine recipe AND mirrors
-  the CVC leg's 489-image data volume exactly. Run:
-  `python interventions/train_vmunet_isic18_cvcrecipe.py --subset 490` (PID 22480),
-  ~42 min/epoch → ~3 days. Cached dataset `train_490.pt`, resume state every 5 epochs.
-  Log `interventions/logs/train_vmunet_isic_cvcrecipe.log`; resume:
+  (CNN 10.6×, SSM 7.1×, ViT 52×).
+- **SSM ISIC canonical retrain KILLED 18:55** (user decision — laptop needed for other
+  projects; only ~16 min of epoch-1 work lost). The paper proceeds with the ISIC SSM row
+  from the legacy VSSM checkpoint (−10.3%, held-out n=260), honestly caveated in Table 2
+  and methods. Rationale: the claim is corroborating (headline anchored on the matched
+  CNN + ViT legs); the two VSSM implementations agree to 0.906 feature similarity, so the
+  legacy number (−10.3%, consistent with the CNN's −9.4%) is expected to be representative.
+  If a reviewer asks, the retrain can be run later (script is resume-safe; $5–15 rented
+  GPU = half a day) with 2 months of deadline slack.
+- The `--subset 490` flag and cached dataset remain available for a future run:
   `python interventions/train_vmunet_isic18_cvcrecipe.py --subset 490 --resume
   interventions/checkpoints/vmunet_isic_cvcrecipe_state_latest.pt`.
-- Cached dataset module `interventions/isic_dataset.py` (thread-parallel build, persisted
-  to `interventions/cache/isic256/*.pt`, gitignored) cut per-epoch 29MP decode costs.
 
 ## Running now (or last state)
-- **VM-UNet ISIC canonical retrain (490-image CVC-matched subset)** — PID 22480 (started
-  18:39), GPU busy ~3 days.
+- **Nothing running; GPU free.** All Phase-2 eval work complete. Laptop fully usable.
 
 ## Delivered this session (commits)
 | Artifact | Path | Purpose |
@@ -44,12 +43,12 @@
   EDT-equivalent `hd95_fast` (exact, diff=0.0).
 
 ## Remaining before Oct 26
-1. **~9–10 days:** VM-UNet ISIC canonical retrain (running) → replaces the legacy-VSSM
-   ISIC SSM row; rerun held-out eval (--models all) when done.
-2. Write the full 4-page paper from the reframed skeleton (no-inversion thesis).
+1. Write the full 4-page paper from the reframed skeleton (no-inversion thesis; SSM ISIC
+   row caveated with the legacy-VSSM footnote).
+2. Optional (only if a reviewer asks): run the canonical ISIC SSM retrain on cloud or in a
+   laptop GPU gap (~3 days local / half a day rented).
 3. Lock author list; assemble citations (10–12); render 300-dpi figures.
 
 ## Known blockers
-- None active. The SSM ISIC row carries a legacy-VSSM caveat until the running retrain
-  completes (~9–10 days).
+- None active. One documented caveat in Table 2 (ISIC SSM = legacy VSSM implementation).
 
