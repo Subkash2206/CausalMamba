@@ -62,6 +62,9 @@ def main():
                     help='Smoke/timing: stop each epoch after N micro-batches.')
     ap.add_argument('--max_epochs', type=int, default=None,
                     help='Smoke/timing: stop after this many epochs.')
+    ap.add_argument('--subset', type=int, default=None,
+                    help='Train on the first N images of the seeded ISIC split (CVC-matched '
+                         'data volume, e.g. 490 to mirror CVC\'s 489-image leg).')
     ap.add_argument('--resume', default=None,
                     help='Full state file (*.pt) OR raw model weights (*.pth).')
     ap.add_argument('--resume_epoch', type=int, default=0,
@@ -78,8 +81,12 @@ def main():
 
     with open(SPLIT_JSON) as f:
         split = json.load(f)
-    train_ds = ISICCacheDataset(split['train'], IMG_DIR, MASK_DIR, is_train=True,
-                                cache_name='train')
+    train_names = split['train']
+    if args.subset:
+        train_names = train_names[:args.subset]
+        print(f'[subset] training on {len(train_names)} images (CVC-matched data volume)')
+    train_ds = ISICCacheDataset(train_names, IMG_DIR, MASK_DIR, is_train=True,
+                                cache_name=f'train_{args.subset}' if args.subset else 'train')
     val_ds = ISICCacheDataset(split['val'], IMG_DIR, MASK_DIR, is_train=False,
                               cache_name='val')
     train_loader = DataLoader(train_ds, batch_size=MICRO_BATCH, shuffle=True,

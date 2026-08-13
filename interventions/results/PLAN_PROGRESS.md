@@ -1,23 +1,27 @@
 # Plan Progress & Runbook — 2026-08-13
 
-## Status update (18:30 local — ViT leg closed, SSM leg running)
+## Status update (18:45 local — ViT leg closed, SSM leg running CVC-matched subset)
 - **ViT leg CLOSED 17:30**: Swin-UNETR trained on ISIC (CVC recipe, 100 ep, 2.3 h, best
   val loss 0.1339) and evaluated on the held-out test: clean 0.890, feat-LP **−0.6%**
   (p=9.4e-12). **Headline change:** the legacy Swin-UNet's −66.5% is architecture-specific,
   not transformer-general. With all legs matched there is **no cross-dataset inversion**:
   ordering is CNN > SSM > ViT on BOTH datasets, and every family is more fragile on CVC
   (CNN 10.6×, SSM 7.1×, ViT 52×). Skeleton/report/summarizer reframed accordingly.
-- **SSM leg RUNNING 18:16** (user decision: local, same-as-CVC): VM-UNet ISIC canonical
-  retrain (PID 25468), 100 ep, measured 0.5 h per 120-micro-batch+val epoch → **~2.3 h/
-  epoch → ~9–10 days**. Cached ISIC dataset + cudnn.benchmark + resume state every 5 ep.
+- **SSM leg RUNNING 18:39 — user decision: CVC-matched 490-image subset (~3 days).**
+  Rationale: 8–15 epochs was rejected (LR still 95% of peak at ep 15; recreates the
+  recipe confound); a 490-image subset keeps the full 100-epoch cosine recipe AND mirrors
+  the CVC leg's 489-image data volume exactly. Run:
+  `python interventions/train_vmunet_isic18_cvcrecipe.py --subset 490` (PID 22480),
+  ~42 min/epoch → ~3 days. Cached dataset `train_490.pt`, resume state every 5 epochs.
   Log `interventions/logs/train_vmunet_isic_cvcrecipe.log`; resume:
-  `python interventions/train_vmunet_isic18_cvcrecipe.py --resume
+  `python interventions/train_vmunet_isic18_cvcrecipe.py --subset 490 --resume
   interventions/checkpoints/vmunet_isic_cvcrecipe_state_latest.pt`.
 - Cached dataset module `interventions/isic_dataset.py` (thread-parallel build, persisted
   to `interventions/cache/isic256/*.pt`, gitignored) cut per-epoch 29MP decode costs.
 
 ## Running now (or last state)
-- **VM-UNet ISIC canonical retrain** — PID 25468 (started 18:16), GPU busy ~10 days.
+- **VM-UNet ISIC canonical retrain (490-image CVC-matched subset)** — PID 22480 (started
+  18:39), GPU busy ~3 days.
 
 ## Delivered this session (commits)
 | Artifact | Path | Purpose |
