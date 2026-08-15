@@ -1,0 +1,4 @@
+Architecture,CVC held-out clean,CVC held-out feat-LP,CVC d%,ISIC held-out clean,ISIC held-out feat-LP,ISIC d%,Leg status
+ResNet50-UNet (CNN),0.96,0.0,-100.0,0.892,0.808,-9.4,matched recipe
+VM-UNet (SSM),0.912,0.244,-73.2,0.915,0.821,-10.3,CVC canonical; ISIC legacy VSSM
+Swin-UNETR (ViT),0.824,0.569,-30.9,0.89,0.884,-0.6,matched recipe

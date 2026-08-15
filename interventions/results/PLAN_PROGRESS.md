@@ -1,26 +1,29 @@
 # Plan Progress & Runbook — 2026-08-13
 
-## Status update (19:00 local — SSM retrain KILLED by decision; paper ships with caveat)
-- **ViT leg CLOSED 17:30**: Swin-UNETR trained on ISIC (CVC recipe, 100 ep, 2.3 h, best
-  val loss 0.1339) and evaluated on the held-out test: clean 0.890, feat-LP **−0.6%**
-  (p=9.4e-12). The legacy Swin-UNet's −66.5% is architecture-specific, not
-  transformer-general. With matched CNN + ViT legs there is **no cross-dataset inversion**:
-  ordering is CNN > SSM > ViT on BOTH datasets, and every family is more fragile on CVC
-  (CNN 10.6×, SSM 7.1×, ViT 52×).
-- **SSM ISIC canonical retrain KILLED 18:55** (user decision — laptop needed for other
-  projects; only ~16 min of epoch-1 work lost). The paper proceeds with the ISIC SSM row
-  from the legacy VSSM checkpoint (−10.3%, held-out n=260), honestly caveated in Table 2
-  and methods. Rationale: the claim is corroborating (headline anchored on the matched
-  CNN + ViT legs); the two VSSM implementations agree to 0.906 feature similarity, so the
-  legacy number (−10.3%, consistent with the CNN's −9.4%) is expected to be representative.
-  If a reviewer asks, the retrain can be run later (script is resume-safe; $5–15 rented
-  GPU = half a day) with 2 months of deadline slack.
-- The `--subset 490` flag and cached dataset remain available for a future run:
-  `python interventions/train_vmunet_isic18_cvcrecipe.py --subset 490 --resume
-  interventions/checkpoints/vmunet_isic_cvcrecipe_state_latest.pt`.
+## Status update (20:10 local — paper package COMPLETE; draft ready)
+- **Kaggle SSM retrain ABANDONED** (session failures + state-file loss at epoch 17; no
+  recovery). The paper ships with the legacy-VSSM caveat on the ISIC SSM row (Table 2 †),
+  exactly as agreed. The package + recipe remain on Kaggle if ever needed (~4–5 sessions).
+- **Paper package generated** (`interventions/results/paper_v2/`):
+  - `ISBI_PAPER_DRAFT.md` — complete 4-page draft (abstract, intro, methods, results,
+    discussion, 3 tables, 2 figures, 11 references; ~2,200 words).
+  - `tables/table{1,2,3}_*.csv` — generated from the result JSONs by
+    `experiments/export_isbi_package.py` (no hardcoded numbers).
+  - `figures/fig1_cvc_dose_response.png` + `fig2_cross_dataset_fragility.png` — 300 dpi.
+- Headline (final): consistent CNN > SSM > ViT ordering on both datasets; CVC ≫ ISIC
+  magnitude; no inversion. Swin-UNet −66.5% vs Swin-UNETR −0.6% = within-family warning.
 
-## Running now (or last state)
-- **Nothing running; GPU free.** All Phase-2 eval work complete. Laptop fully usable.
+## Delivered this session (commits)
+| Artifact | Path | Purpose |
+|---|---|---|
+| Paper export script | `interventions/experiments/export_isbi_package.py` | Tables + 300-dpi figures from JSONs |
+| Paper package | `interventions/results/paper_v2/` | Draft + 3 table CSVs + 2 figures |
+| Kaggle runbook | `interventions/KAGGLE_RUNBOOK.md` | Cloud path (deferred/abandoned) |
+
+## Remaining before Oct 26
+1. Lock author list; format the draft to IEEE/ISBI LaTeX (two-column).
+2. Optional: example-mask overlays for Fig. 2 (nice-to-have).
+3. Optional (only if a reviewer asks): canonical ISIC SSM retrain (Kaggle package intact).
 
 ## Delivered this session (commits)
 | Artifact | Path | Purpose |
