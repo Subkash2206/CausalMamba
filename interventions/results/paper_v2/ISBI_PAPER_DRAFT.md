@@ -1,8 +1,8 @@
 # Feature-Domain Spectral Fragility is Dataset-Dependent: A Matched Cross-Dataset Causal Analysis of CNN, SSM, and ViT Segmenters
 
-**Authors:** [Author List — TBD]  
-**Venue:** ISBI 2027 (4-page, IEEE double-column), draft v1 — 2026-08-13  
-**Corresponding files:** tables → `paper_v2/tables/`, figures → `paper_v2/figures/`
+**Authors:** [Author List — TBD]
+**Venue:** ISBI 2027 (4-page, IEEE double-column), draft v1 — 2026-08-13
+**Corresponding files:** tables -> paper_v2/tables/, figures -> paper_v2/figures/
 
 ---
 
@@ -25,23 +25,33 @@ architectures within a family. Input-domain blur of equal strength degrades all 
 mildly, dissociating feature- from input-spectral sensitivity, and Fourier-based
 augmentation does not close the feature-domain gap.
 
+
 ---
 
 ## 1. Introduction
 
 Robustness of medical image segmentation models is almost exclusively assessed with
-*input-domain* perturbations — noise, blur, compression, or domain shifts [ref 10].
-Yet deployed models are also exposed to *internal* distribution shift: the statistics of
+*input-domain* perturbations — noise, blur, compression, or domain shifts [10]. Yet
+deployed models are also exposed to *internal* distribution shift: the statistics of
 learned feature representations can change without any change to the input. A
 feature-domain intervention — surgically modifying the frequency content of internal
 representations — is a direct causal probe of what those representations rely on
-[refs 1, 9]. Existing spectral-bias analyses focus on input statistics and CNNs
-[refs 1, 8]; state-space models (Mamba [ref 2], VM-UNet [ref 3]) and transformers
-[refs 4, 5] are largely unstudied under feature-frequency intervention, and
-cross-architecture comparisons are typically confounded by recipe differences
-(initialization, loss, schedule, resolution).
+[1, 9]. Existing spectral-bias analyses focus on input statistics and CNNs [1, 8];
+state-space models (Mamba [2], VM-UNet [3]) and transformers [4, 5] are largely
+unstudied under feature-frequency intervention, and cross-architecture comparisons are
+typically confounded by recipe differences (initialization, loss, schedule, resolution).
 
 This paper provides a causal, cross-architecture, cross-dataset study of feature-domain
+low-pass (LP) interventions at cutoff rho = 0.25 and across a dose-response sweep. Every
+leg is **recipe-matched** — identical loss, optimizer, schedule, resolution, and seed on
+both datasets — and every headline number is reported on **untouched held-out test
+splits**. Under this protocol we find that (i) feature-spectral fragility is *stably
+ordered* across architectures (CNN > SSM > ViT) on both datasets; (ii) all families are
+far more fragile on CVC than on ISIC; and (iii) a previously reported cross-dataset
+*inversion* does not survive recipe matching, tracing instead to an easy development
+subset and a mismatched transformer checkpoint. The within-family divergence between two
+transformers (Swin-UNet vs Swin-UNETR, −66% vs −0.6% on identical data) is itself a
+warning: fragility claims must name the exact architecture, not the family.
 
 ---
 
@@ -76,17 +86,12 @@ characterizations (Tables 1, 3).
 ### 2.3 Interventions
 Feature-domain LP registers forward hooks on every semantic stage (30 VSSBlocks for
 SSM; 9 encoder/decoder blocks for CNN; transformer blocks for ViT) and zeroes
-frequencies above a normalized radial cutoff ρ ∈ {0.10,…,0.40} via an ideal circular
-mask in the 2-D DFT (FFT→mask→IFFT). The headline cutoff is ρ = 0.25. Input-domain LP
-applies the same mask to the resized input. All interventions are post-training; no
-parameters change.
+frequencies above a normalized radial cutoff rho in {0.10, ..., 0.40} via an ideal
+circular mask in the 2-D DFT (FFT -> mask -> IFFT). The headline cutoff is rho = 0.25.
+Input-domain LP applies the same mask to the resized input. All interventions are
+post-training; no parameters change.
 
 ### 2.4 Metrics and statistics
-Pooled and per-image Dice (mean ± SD, bootstrap 95% CI); boundary F1 (BF1) and HD95
-for the SSM/CNN legs on CVC (the CNN's feature-LP HD95 is undefined — empty
-predictions — and omitted); paired Wilcoxon signed-rank tests on per-image Dice, and
-95% bootstrap CIs.
-
 
 ---
 
@@ -94,30 +99,30 @@ predictions — and omitted); paired Wilcoxon signed-rank tests on per-image Dic
 
 ### 3.1 Feature-domain dose-response on CVC (Table 1, Fig. 1)
 All architectures degrade monotonically with aggressiveness of feature-space LP, but
-their *onset* differs sharply (Table 1). The CNN collapses at ρ = 0.10 (Dice 0.932 → 0.000)
-and remains collapsed through ρ = 0.30, recovering only at ρ = 0.40 (0.533). The SSM
-behaves similarly at the most aggressive cutoffs (0.000 at ρ = 0.10) but degrades
-non-monotonically across the sweep (0.292 at ρ = 0.25). The ViT is the most resilient:
-its worst point (0.264 at ρ = 0.10) exceeds the SSM's worst by a wide margin, and it
-degrades only gradually (0.600 at ρ = 0.25). All per-image effects are significant
-(Wilcoxon p < 1e-18 for every model at ρ = 0.25).
+their *onset* differs sharply (Table 1). The CNN collapses at rho = 0.10 (Dice
+0.932 -> 0.000) and remains collapsed through rho = 0.30, recovering only at
+rho = 0.40 (0.533). The SSM behaves similarly at the most aggressive cutoffs (0.000 at
+rho = 0.10) but degrades non-monotonically across the sweep (0.292 at rho = 0.25). The
+ViT is the most resilient: its worst point (0.264 at rho = 0.10) exceeds the SSM's
+worst by a wide margin, and it degrades only gradually (0.600 at rho = 0.25). All
+per-image effects are significant (Wilcoxon p < 1e-18 for every model at rho = 0.25).
 
-**Boundary locus.** At ρ = 0.25 the SSM's errors concentrate on the lesion boundary:
-the error rate in a ±5-px band is 20.4%, versus 0.10% in the interior — a 86.5×
+**Boundary locus.** At rho = 0.25 the SSM's errors concentrate on the lesion boundary:
+the error rate in a ±5-px band is 20.4%, versus 0.10% in the interior — a 86.5x
 ratio — with background errors at 0.31%. High-frequency features are therefore
 functionally necessary for boundary discrimination, not decoration. Lesion size is a
-secondary aggravator (small lesions lose the most: mean ΔDice −0.734 vs −0.593 for
-large), but all sizes collapse, so size does not drive the effect.
+secondary aggravator (small lesions lose the most: mean Delta-Dice −0.734 vs −0.593
+for large), but all sizes collapse, so size does not drive the effect.
 
 ### 3.2 Cross-dataset fragility with all legs matched (Table 2, Fig. 2)
-On untouched held-out test splits, feature-LP at ρ = 0.25 collapses the CNN on CVC
-(0.960 → 0.000, −100%) and heavily degrades the SSM (−73.2%), while the ViT loses only
+On untouched held-out test splits, feature-LP at rho = 0.25 collapses the CNN on CVC
+(0.960 -> 0.000, −100%) and heavily degrades the SSM (−73.2%), while the ViT loses only
 −30.9% (Table 2). On ISIC, all three families are mildly affected: CNN −9.4% (matched
 recipe; ISIC-recipe checkpoint consistent at −10.1%), SSM −10.3%, ViT −0.6%. The
 fragility ordering is therefore **CNN > SSM > ViT on both datasets**, and every family
-is far more fragile on CVC (CNN 10.6×, SSM 7.1×, ViT 52×). There is **no cross-dataset
-inversion**. All effects are significant per-image (Wilcoxon p < 1e-19 for every
-model on both held-out splits).
+is far more fragile on CVC (CNN 10.6x, SSM 7.1x, ViT 52x). There is **no cross-dataset
+inversion**. All effects are significant per-image (Wilcoxon p < 1e-19 for every model
+on both held-out splits).
 
 **Architecture-specificity within a family.** The same ISIC data and protocol that
 leaves the matched Swin-UNETR essentially immune (−0.6%) collapses the legacy
@@ -129,6 +134,25 @@ conclusions therefore must name the exact architecture.
 measured on an easy 50-image convenience subset (the first 50 sorted images) and do not
 replicate on the untouched 260-image test split. All ISIC numbers reported here are on
 the held-out split.
+
+### 3.3 Input-domain dissociation and defense (Table 3)
+Input-space LP of equal strength leaves all models at ≥ −8% Dice on CVC (CNN worst,
+−22.4%), so feature-domain fragility is not a trivial consequence of
+low-frequency-only inputs. Fourier-based augmentation (TSA fine-tuning) improves
+input-domain robustness (+4.6 pts pooled on CVC input-LP, −8.1% -> −3.5%) but does
+**not** repair feature-domain collapse (−67.4% -> −71.0%): spectral robustness does not
+transfer across domains.
+
+### 3.4 Boundary metrics
+Feature-LP destroys boundary structure wherever it is effective: the SSM's boundary F1
+falls from 0.672 to 0.062 and HD95 rises from 21.4 to 93.9 px; the ViT degrades
+0.409->0.192 BF1 (HD95 51.0->75.9). The CNN's feature-LP predictions are entirely empty
+(BF1 0.000; HD95 undefined), consistent with its total collapse.
+
+Pooled and per-image Dice (mean ± SD, bootstrap 95% CI); boundary F1 (BF1) and HD95
+for the SSM/CNN legs on CVC (the CNN's feature-LP HD95 is undefined — empty
+predictions — and omitted); paired Wilcoxon signed-rank tests on per-image Dice, and
+95% bootstrap CIs.
 
 
 ---
@@ -155,20 +179,21 @@ frequencies — but we do not test this hypothesis here.
 caveat; the canonical and legacy implementations agree to 0.906 feature similarity).
 Tables 1 and 3 use the CVC validation set (123) rather than the held-out test split.
 Normalization differs by dataset (ImageNet vs [0,1]). Feature hooks cover stage outputs,
-not per-channel statistics. The Swin-UNet anomaly is reported for architecture-sensitivity
-but is not a matched leg.
+not per-channel statistics. The Swin-UNet anomaly is reported for architecture
+sensitivity but is not a matched leg.
 
-**Conclusion.** Feature-spectral fragility is dataset-dependent and architecture-specific,
-not an invariant of a model family. Recipe-matched, held-out evaluation overturns an
-apparent cross-dataset inversion and replaces it with a stable, interpretable ordering —
-and warns that robustness claims must specify the exact architecture, not the family.
+**Conclusion.** Feature-spectral fragility is dataset-dependent and architecture
+specific, not an invariant of a model family. Recipe-matched, held-out evaluation
+overturns an apparent cross-dataset inversion and replaces it with a stable,
+interpretable ordering — and warns that robustness claims must specify the exact
+architecture, not the family.
 
 ---
 
 ## Tables
 
 ### Table 1 — CVC feature-space LP dose-response (pooled Dice, n=123 validation)
-| Model | Clean | ρ=0.10 | 0.15 | 0.20 | 0.25 | 0.30 | 0.40 |
+| Model | Clean | rho=0.10 | 0.15 | 0.20 | 0.25 | 0.30 | 0.40 |
 |---|---|---:|---:|---:|---:|---:|---:|
 | ResNet50-UNet (CNN) | 0.932 | 0.000 | 0.000 | 0.000 | 0.000 | 0.005 | 0.533 |
 | VM-UNet (SSM) | 0.896 | 0.000 | 0.181 | 0.300 | 0.292 | 0.307 | 0.383 |
@@ -176,34 +201,36 @@ and warns that robustness claims must specify the exact architecture, not the fa
 | Swin-UNETR (ViT) | 0.785 | 0.264 | 0.361 | 0.456 | 0.600 | 0.646 | 0.710 |
 *CSV: `paper_v2/tables/table1_cvc_dose_response.csv`*
 
-### Table 2 — Cross-dataset feature-spectral fragility at ρ=0.25 (Δ% Dice, held-out)
-| Architecture | CVC (n=62) clean→LP (Δ%) | ISIC (n=260) clean→LP (Δ%) | Leg |
+### Table 2 — Cross-dataset feature-spectral fragility at rho=0.25 (Delta% Dice, held-out)
+| Architecture | CVC (n=62) clean->LP (Delta%) | ISIC (n=260) clean->LP (Delta%) | Leg |
 |---|---|---:|---:|---|
-| ResNet50-UNet (CNN) | 0.960→0.000 (−100%) | 0.892→0.808 (−9.4%) | matched recipe |
-| VM-UNet (SSM) | 0.913→0.245 (−73.2%)† | 0.915→0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
-| Swin-UNETR (ViT) | 0.824→0.569 (−30.9%) | 0.890→0.884 (−0.6%) | matched recipe |
+| ResNet50-UNet (CNN) | 0.960->0.000 (−100%) | 0.892->0.808 (−9.4%) | matched recipe |
+| VM-UNet (SSM) | 0.913->0.245 (−73.2%)† | 0.915->0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
+| Swin-UNETR (ViT) | 0.824->0.569 (−30.9%) | 0.890->0.884 (−0.6%) | matched recipe |
 † ISIC SSM uses the legacy VSSM implementation (0.906 similarity to canonical; retrain deferred).
 *CSV: `paper_v2/tables/table2_cross_dataset_fragility.csv`*
 
-### Table 3 — Input-domain dissociation and defense (CVC, ρ=0.25, n=123)
-| Model | Clean | Input-LP | Feat-LP | Δ% feat | BF1 clean→LP | HD95 clean→LP |
+### Table 3 — Input-domain dissociation and defense (CVC, rho=0.25, n=123)
+| Model | Clean | Input-LP | Feat-LP | Delta% feat | BF1 clean->LP | HD95 clean->LP |
 |---|---:|---:|---:|---:|---:|---:|
-| ResNet50-UNet (CNN) | 0.932 | 0.723 | 0.000 | −100% | 0.788→0.000 | 16.1→— (undefined) |
-| VM-UNet (SSM) | 0.896 | 0.823 | 0.292 | −67.4% | 0.672→0.062 | 21.4→93.9 |
-| VM-UNet-TSA | 0.912 | 0.880 | 0.264 | −71.0% | 0.756→0.081 | 17.5→86.4 |
-| Swin-UNETR (ViT) | 0.785 | 0.781 | 0.600 | −23.5% | 0.409→0.192 | 51.0→75.9 |
+| ResNet50-UNet (CNN) | 0.932 | 0.723 | 0.000 | −100% | 0.788->0.000 | 16.1->— (undefined) |
+| VM-UNet (SSM) | 0.896 | 0.823 | 0.292 | −67.4% | 0.672->0.062 | 21.4->93.9 |
+| VM-UNet-TSA | 0.912 | 0.880 | 0.264 | −71.0% | 0.756->0.081 | 17.5->86.4 |
+| Swin-UNETR (ViT) | 0.785 | 0.781 | 0.600 | −23.5% | 0.409->0.192 | 51.0->75.9 |
 *CSV: `paper_v2/tables/table3_input_feature_defense.csv`*
 
 ## Figures
 
 - **Fig. 1 — CVC dose-response curves.** Pooled Dice vs feature-LP cutoff per
-  architecture (clean at ρ=0; ρ=0.25 marked). `paper_v2/figures/fig1_cvc_dose_response.png`
-- **Fig. 2 — Cross-dataset fragility heatmap.** Feature-LP Δ% Dice per architecture
-  (rows) × dataset (columns; both held-out). `paper_v2/figures/fig2_cross_dataset_fragility.png`
+  architecture (clean at rho=0; rho=0.25 marked).
+  `paper_v2/figures/fig1_cvc_dose_response.png`
+- **Fig. 2 — Cross-dataset fragility heatmap.** Feature-LP Delta% Dice per architecture
+  (rows) x dataset (columns; both held-out).
+  `paper_v2/figures/fig2_cross_dataset_fragility.png`
 
 ---
 
-## References (target set)
+## References
 1. Geirhos R., et al. *Shortcut learning in deep neural networks.* Nat. Mach. Intell. 2:665–673, 2020.
 2. Gu A., Dao T. *Mamba: Linear-time sequence modeling with selective state spaces.* arXiv:2312.00752, 2023.
 3. Zhang Z., et al. *VM-UNet: Vision Mamba UNet for medical image segmentation.* arXiv:2402.02491, 2024.
@@ -212,37 +239,12 @@ and warns that robustness claims must specify the exact architecture, not the fa
 6. Reinke A., et al. *Common limitations of image segmentation metrics.* arXiv:2404.09470, 2024.
 7. Ji Z., et al. *Boundary loss for highly unbalanced segmentation.* MIDL 2019.
 8. (TSA/Fourier augmentation) State-space Fourier augmentation source used in interventions, 2024.
-9. Pearl J. *Causality: Models, Reasoning, and Inference.* Cambridge Univ. Press, 2009. / Koh P., et al. *Causal robustness survey* (ICML 2021).
+9. Pearl J. *Causality: Models, Reasoning, and Inference.* Cambridge Univ. Press, 2009; Koh P., et al. *Causal robustness survey*, ICML 2021.
 10. Wang J., et al. *Pan-cancer segmentation and robustness across datasets.* (dataset-shift reference), 2023.
-11. Codella N., et al. *ISIC2018 challenge* (IEEE 2019); Jha D., et al. *CVC-ClinicDB* (IEEE 2020).
+11. Codella N., et al. *ISIC2018 challenge.* IEEE J. Biomed. Health Inform., 2019; Jha D., et al. *CVC-ClinicDB.* IEEE J. Biomed. Health Inform., 2020.
 
 ---
 
 *Draft v1. Tables/figures auto-generated from `interventions/results/*.json` via
 `interventions/experiments/export_isbi_package.py`. Remaining: lock author list,
 format to IEEE/ISBI LaTeX, 300-dpi check, optional SSM canonical retrain.*
-
-### 3.3 Input-domain dissociation and defense (Table 3)
-Input-space LP of equal strength leaves all models at ≥ −8% Dice on CVC (CNN worst,
-−22.4%), so feature-domain fragility is not a trivial consequence of
-low-frequency-only inputs. Fourier-based augmentation (TSA fine-tuning) improves
-input-domain robustness (+4.6 pts pooled on CVC input-LP, −8.1% → −3.5%) but does
-**not** repair feature-domain collapse (−67.4% → −71.0%): spectral robustness does not
-transfer across domains.
-
-### 3.4 Boundary metrics
-Feature-LP destroys boundary structure wherever it is effective: the SSM's boundary F1
-falls from 0.672 to 0.062 and HD95 rises from 21.4 to 93.9 px; the ViT degrades
-0.409→0.192 BF1 (HD95 51.0→75.9). The CNN's feature-LP predictions are entirely empty
-(BF1 0.000; HD95 undefined), consistent with its total collapse.
-
-low-pass (LP) interventions at cutoff ρ = 0.25 and across a dose-response sweep. Every
-leg is **recipe-matched** — identical loss, optimizer, schedule, resolution, and seed on
-both datasets — and every headline number is reported on **untouched held-out test
-splits**. Under this protocol we find that (i) feature-spectral fragility is *stably
-ordered* across architectures (CNN > SSM > ViT) on both datasets; (ii) all families are
-far more fragile on CVC than on ISIC; and (iii) a previously reported cross-dataset
-*inversion* does not survive recipe matching, tracing instead to an easy development
-subset and a mismatched transformer checkpoint. The within-family divergence between two
-transformers (Swin-UNet vs Swin-UNETR, −66% vs −0.6% on identical data) is itself a
-warning: fragility claims must name the exact architecture, not the family.
