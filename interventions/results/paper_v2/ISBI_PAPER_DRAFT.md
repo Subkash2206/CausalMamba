@@ -1,7 +1,7 @@
 # Feature-Domain Spectral Fragility is Dataset-Dependent: A Matched Cross-Dataset Causal Analysis of CNN, SSM, and ViT Segmenters
 
 **Authors:** [Author List — TBD]
-**Venue:** ISBI 2027 (4-page, IEEE double-column), draft v1 — 2026-08-13
+**Venue:** ISBI 2027 (4-page, IEEE double-column), draft v2 — 2026-08-20
 **Corresponding files:** tables -> paper_v2/tables/, figures -> paper_v2/figures/
 
 ---
@@ -61,9 +61,8 @@ warning: fragility claims must name the exact architecture, not the family.
 CVC-ClinicDB (612 polyp frames) [11] and ISIC2018 (2,594 lesion images) [11]. Deterministic
 splits (seed 42) carve ISIC into 2,075/259/260 and CVC into 489/61/62
 train/val/test; the test splits were untouched until final evaluation. Model selection
-uses the val splits only. Table 2 reports both datasets on their held-out test splits;
-the CVC validation set (123) is used for the mechanistic dose-response and defense
-characterizations (Tables 1, 3).
+uses the val splits only. Tables 1–3 are all computed on the held-out test splits
+(CVC n=62, ISIC n=260), so every headline number is reported on untouched held-out data.
 
 ### 2.2 Architectures and recipes — matched vs caveated legs
 - **CNN (matched):** ResNet50-UNet (segmentation_models_pytorch, random encoder init)
@@ -93,7 +92,7 @@ post-training; no parameters change.
 
 ### 2.4 Metrics and statistics
 Pooled and per-image Dice (mean ± SD, bootstrap 95% CI); boundary F1 (BF1) and HD95 [6]
-for the SSM/CNN legs on CVC (the CNN's feature-LP HD95 is undefined — empty predictions —
+for all four CVC models (the CNN's feature-LP HD95 is undefined — empty predictions —
 and omitted); paired Wilcoxon signed-rank tests on per-image Dice, and 95% bootstrap CIs.
 
 ---
@@ -103,11 +102,11 @@ and omitted); paired Wilcoxon signed-rank tests on per-image Dice, and 95% boots
 ### 3.1 Feature-domain dose-response on CVC (Table 1, Fig. 1)
 All architectures degrade monotonically with aggressiveness of feature-space LP, but
 their *onset* differs sharply (Table 1). The CNN collapses at rho = 0.10 (Dice
-0.932 -> 0.000) and remains collapsed through rho = 0.30, recovering only at
-rho = 0.40 (0.533). The SSM behaves similarly at the most aggressive cutoffs (0.000 at
-rho = 0.10) but degrades non-monotonically across the sweep (0.292 at rho = 0.25). The
-ViT is the most resilient: its worst point (0.264 at rho = 0.10) exceeds the SSM's
-worst by a wide margin, and it degrades only gradually (0.600 at rho = 0.25). All
+0.960 -> 0.000) and remains collapsed through rho = 0.30, recovering only at
+rho = 0.40 (0.607). The SSM behaves similarly at the most aggressive cutoff (0.000 at
+rho = 0.10) but degrades non-monotonically across the sweep (0.244 at rho = 0.25). The
+ViT is the most resilient: its worst point (0.236 at rho = 0.10) sits far above the
+CNN/SSM collapse, and it degrades only gradually (0.569 at rho = 0.25). All
 per-image effects are significant (Wilcoxon p < 1e-18 for every model at rho = 0.25).
 
 **Boundary locus.** At rho = 0.25 the SSM's errors concentrate on the lesion boundary [7]:
@@ -139,17 +138,17 @@ replicate on the untouched 260-image test split. All ISIC numbers reported here 
 the held-out split.
 
 ### 3.3 Input-domain dissociation and defense (Table 3)
-Input-space LP of equal strength leaves all models at ≥ −8% Dice on CVC (CNN worst,
-−22.4%), so feature-domain fragility is not a trivial consequence of
+Input-space LP of equal strength leaves all models within −20% of clean Dice on CVC
+(CNN worst, −20.0%), so feature-domain fragility is not a trivial consequence of
 low-frequency-only inputs. Fourier-based augmentation (TSA fine-tuning) improves
-input-domain robustness (+4.6 pts pooled on CVC input-LP, −8.1% -> −3.5%) but does
-**not** repair feature-domain collapse (−67.4% -> −71.0%): spectral robustness does not
-transfer across domains.
+input-domain robustness (+7.6 pts pooled on CVC input-LP, −6.2% -> −1.1%) but leaves
+feature-domain collapse unchanged (SSM and TSA both −73.2%): spectral robustness does
+not transfer across domains.
 
 ### 3.4 Boundary metrics
 Feature-LP destroys boundary structure wherever it is effective [6]: the SSM's boundary F1
-falls from 0.672 to 0.062 and HD95 rises from 21.4 to 93.9 px; the ViT degrades
-0.409->0.192 BF1 (HD95 51.0->75.9). The CNN's feature-LP predictions are entirely empty
+falls from 0.719 to 0.069 and HD95 rises from 18.9 to 98.2 px; the ViT degrades
+0.497->0.180 BF1 (HD95 51.3->87.4). The CNN's feature-LP predictions are entirely empty
 (BF1 0.000; HD95 undefined), consistent with its total collapse.
 
 
@@ -175,7 +174,6 @@ frequencies — but we do not test this hypothesis here.
 
 **Limitations.** The ISIC SSM row uses the legacy VSSM checkpoint (implementation
 caveat; the canonical and legacy implementations agree to 0.906 feature similarity).
-Tables 1 and 3 use the CVC validation set (123) rather than the held-out test split.
 Normalization differs by dataset (ImageNet vs [0,1]). Feature hooks cover stage outputs,
 not per-channel statistics. The Swin-UNet anomaly is reported for architecture
 sensitivity but is not a matched leg.
@@ -190,13 +188,13 @@ architecture, not the family.
 
 ## Tables
 
-### Table 1 — CVC feature-space LP dose-response (pooled Dice, n=123 validation)
+### Table 1 — CVC feature-space LP dose-response (pooled Dice, n=62 held-out test)
 | Model | Clean | rho=0.10 | 0.15 | 0.20 | 0.25 | 0.30 | 0.40 |
 |---|---|---:|---:|---:|---:|---:|---:|
-| ResNet50-UNet (CNN) | 0.932 | 0.000 | 0.000 | 0.000 | 0.000 | 0.005 | 0.533 |
-| VM-UNet (SSM) | 0.896 | 0.000 | 0.181 | 0.300 | 0.292 | 0.307 | 0.383 |
-| VM-UNet-TSA | 0.912 | 0.002 | 0.016 | 0.204 | 0.264 | 0.275 | 0.498 |
-| Swin-UNETR (ViT) | 0.785 | 0.264 | 0.361 | 0.456 | 0.600 | 0.646 | 0.710 |
+| ResNet50-UNet (CNN) | 0.960 | 0.000 | 0.000 | 0.000 | 0.000 | 0.060 | 0.607 |
+| VM-UNet (SSM) | 0.912 | 0.000 | 0.124 | 0.243 | 0.244 | 0.288 | 0.380 |
+| VM-UNet-TSA | 0.942 | 0.004 | 0.015 | 0.127 | 0.252 | 0.327 | 0.435 |
+| Swin-UNETR (ViT) | 0.824 | 0.236 | 0.353 | 0.447 | 0.569 | 0.626 | 0.705 |
 *CSV: `paper_v2/tables/table1_cvc_dose_response.csv`*
 
 ### Table 2 — Cross-dataset feature-spectral fragility at rho=0.25 (Delta% Dice, held-out)
@@ -208,13 +206,13 @@ architecture, not the family.
 † ISIC SSM uses the legacy VSSM implementation (0.906 similarity to canonical; retrain deferred).
 *CSV: `paper_v2/tables/table2_cross_dataset_fragility.csv`*
 
-### Table 3 — Input-domain dissociation and defense (CVC, rho=0.25, n=123)
+### Table 3 — Input-domain dissociation and defense (CVC, rho=0.25, n=62 held-out test)
 | Model | Clean | Input-LP | Feat-LP | Delta% feat | BF1 clean->LP | HD95 clean->LP |
 |---|---:|---:|---:|---:|---:|---:|
-| ResNet50-UNet (CNN) | 0.932 | 0.723 | 0.000 | −100% | 0.788->0.000 | 16.1->— (undefined) |
-| VM-UNet (SSM) | 0.896 | 0.823 | 0.292 | −67.4% | 0.672->0.062 | 21.4->93.9 |
-| VM-UNet-TSA | 0.912 | 0.880 | 0.264 | −71.0% | 0.756->0.081 | 17.5->86.4 |
-| Swin-UNETR (ViT) | 0.785 | 0.781 | 0.600 | −23.5% | 0.409->0.192 | 51.0->75.9 |
+| ResNet50-UNet (CNN) | 0.960 | 0.768 | 0.000 | −100% | 0.892->0.000 | 8.1->— (undefined) |
+| VM-UNet (SSM) | 0.912 | 0.856 | 0.244 | −73.2% | 0.719->0.069 | 18.9->98.2 |
+| VM-UNet-TSA | 0.942 | 0.931 | 0.252 | −73.2% | 0.807->0.076 | 16.0->90.7 |
+| Swin-UNETR (ViT) | 0.824 | 0.817 | 0.569 | −30.9% | 0.497->0.180 | 51.3->87.4 |
 *CSV: `paper_v2/tables/table3_input_feature_defense.csv`*
 
 ## Figures
@@ -225,6 +223,9 @@ architecture, not the family.
 - **Fig. 2 — Cross-dataset fragility heatmap.** Feature-LP Delta% Dice per architecture
   (rows) x dataset (columns; both held-out).
   `paper_v2/figures/fig2_cross_dataset_fragility.png`
+- **Fig. 3 — ISIC held-out qualitative examples.** Clean (top) vs feature-LP (bottom)
+  predictions for the five ISIC held-out models on a medium-lesion test image.
+  `paper_v2/figures/fig3_isic_qualitative.png`
 
 ---
 
@@ -243,6 +244,7 @@ architecture, not the family.
 
 ---
 
-*Draft v1. Tables/figures auto-generated from `interventions/results/*.json` via
-`interventions/experiments/export_isbi_package.py`. Remaining: lock author list,
-format to IEEE/ISBI LaTeX, 300-dpi check, optional SSM canonical retrain.*
+*Draft v2. Tables/figures auto-generated from `interventions/results/*.json` via
+`interventions/experiments/export_isbi_package.py`; Tables 1–3 all on held-out splits
+(Tables 1/3 from `cvc_heldout_full.json`, Table 2 from `cvc_heldout_eval.json`).
+Remaining: lock author list; merge updated tables into the IEEE/ISBI LaTeX source.*

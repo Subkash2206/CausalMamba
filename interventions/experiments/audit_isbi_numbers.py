@@ -7,7 +7,7 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 _REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 R = os.path.join(_REPO, 'interventions', 'results')
 DRAFT = os.path.join(R, 'paper_v2', 'ISBI_PAPER_DRAFT.md')
-CVC_ROB = os.path.join(R, 'cvc_robustness_eval.json')
+CVC_ROB = os.path.join(R, 'cvc_heldout_full.json')  # 62-image held-out test (Tables 1 & 3)
 CVC_HO = os.path.join(R, 'cvc_heldout_eval.json')
 ISIC_HO = os.path.join(R, 'isic_heldout_eval.json')
 CUTOFFS = ['0.1', '0.15', '0.2', '0.25', '0.3', '0.4']

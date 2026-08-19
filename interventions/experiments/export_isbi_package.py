@@ -22,7 +22,7 @@ OUT_F = os.path.join(R, 'paper_v2', 'figures')
 os.makedirs(OUT_T, exist_ok=True)
 os.makedirs(OUT_F, exist_ok=True)
 
-CVC_ROB = os.path.join(R, 'cvc_robustness_eval.json')      # 123-val (Tables 1 & 3)
+CVC_ROB = os.path.join(R, 'cvc_heldout_full.json')  # 62-image held-out test (Tables 1 & 3)
 CVC_HO = os.path.join(R, 'cvc_heldout_eval.json')           # 62-test (Table 2)
 ISIC_HO = os.path.join(R, 'isic_heldout_eval.json')         # 260-test (Table 2)
 
@@ -106,13 +106,13 @@ def export_table3():
         fp = lp['dice']
         dlt = (fp - cl['dice']) / cl['dice'] * 100
         bnd = m.get('boundary', {})                      # feature-LP boundary metrics
-        bnd_lp = bnd.get('boundary_f1', float('nan'))
-        hd_lp = bnd.get('hd95', float('nan'))
+        bnd_lp = bnd.get('boundary_f1')
+        hd_lp = bnd.get('hd95')
         rows.append([name, round(cl['dice'], 3), round(inp, 3), round(fp, 3), round(dlt, 1),
-                     round(cl.get('boundary_f1', float('nan')), 3),
-                     round(bnd_lp, 3) if not np.isnan(bnd_lp) else 'nan',
-                     round(cl.get('hd95', float('nan')), 1),
-                     round(hd_lp, 1) if not np.isnan(hd_lp) else 'nan'])
+                     round(cl.get('boundary_f1'), 3) if cl.get('boundary_f1') is not None else 'nan',
+                     round(bnd_lp, 3) if bnd_lp is not None else 'nan',
+                     round(cl.get('hd95'), 1) if cl.get('hd95') is not None else 'nan',
+                     round(hd_lp, 1) if hd_lp is not None else 'nan'])
     p = os.path.join(OUT_T, 'table3_input_feature_defense.csv')
     with open(p, 'w', newline='') as f:
         csv.writer(f).writerows(rows)
