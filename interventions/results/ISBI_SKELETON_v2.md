@@ -168,7 +168,7 @@ Oct 26 draft deadline.
 | Architecture | CVC held-out clean → LP (Δ%) | ISIC held-out clean → LP (Δ%) | Leg status |
 |---|---|---:|---|
 | ResNet50-UNet (CNN) | 0.960 → 0.000 (−100%) | **0.892 → 0.808 (−9.4%)** | **matched recipe** |
-| VM-UNet (SSM) | 0.913 → 0.245 (−73.2%)† | 0.915 → 0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
+| VM-UNet (SSM) | 0.912 → 0.244 (−73.2%)† | 0.915 → 0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
 | Swin-UNETR (ViT) | 0.824 → 0.569 (−30.9%) | **0.890 → 0.884 (−0.6%)** | **matched recipe** |
 | Swin-UNet (ViT, legacy) | — | 0.911 → 0.306 (−66.5%)‡ | replaced by Swin-UNETR |
 \*Both columns are on untouched carved held-out splits (CVC 62, ISIC 260; seed-42 carve). Ordering is CNN > SSM > ViT on both datasets; every family is more fragile on CVC. All per-image effects significant (Wilcoxon p<1e-19 both datasets).

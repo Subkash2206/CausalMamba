@@ -205,7 +205,7 @@ architecture, not the family.
 | Architecture | CVC (n=62) clean->LP (Delta%) | ISIC (n=260) clean->LP (Delta%) | Leg |
 |---|---|---:|---:|---|
 | ResNet50-UNet (CNN) | 0.960->0.000 (−100%) | 0.892->0.808 (−9.4%) | matched recipe |
-| VM-UNet (SSM) | 0.913->0.245 (−73.2%)† | 0.915->0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
+| VM-UNet (SSM) | 0.912->0.244 (−73.2%)† | 0.915->0.821 (−10.3%)† | CVC canonical; ISIC legacy VSSM |
 | Swin-UNETR (ViT) | 0.824->0.569 (−30.9%) | 0.890->0.884 (−0.6%) | matched recipe |
 † ISIC SSM uses the legacy VSSM implementation (0.906 similarity to canonical; retrain deferred).
 *CSV: `paper_v2/tables/table2_cross_dataset_fragility.csv`*
