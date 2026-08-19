@@ -10,12 +10,18 @@ Models:
   - VM-UNet        (SSM, repo impl): best-vmunet-scratch-isic18.pth   @256
   - ResNet50-UNet  (CNN, ISIC recipe): best-unet-isic18.pth            @256
   - ResNet50-UNet  (CNN, CVC recipe / standardized): unet_isic_cvcrecipe_best.pth @256 (included if present)
+  - Swin-UNETR     (ViT, CVC recipe): swinunetr_isic_cvcrecipe_best.pth @256 (included if present)
   - Swin-UNet      (ViT): best-swinunet-isic18.pth                     @224
 
 Results -> interventions/results/isic_heldout_eval.json
 
 Usage:
-    python interventions/experiments/eval_isic_heldout.py
+    # Complete 5-model run (canonical; produces the full file in one pass):
+    python interventions/experiments/eval_isic_heldout.py --models all
+
+    # Partial runs (e.g. a single retrained checkpoint) update the canonical file in
+    # place — no manual row merging needed:
+    python interventions/experiments/eval_isic_heldout.py --models standardized --merge_existing
 """
 
 import sys, os, json, datetime
@@ -165,6 +171,11 @@ def main():
                          "checkpoints only (rerun after retraining completes).")
     ap.add_argument('--output_json', default=os.path.join(
         _REPO, 'interventions', 'results', 'isic_heldout_eval.json'))
+    ap.add_argument('--merge_existing', action='store_true',
+                    help='Merge newly computed rows into an existing output JSON (dedupe by '
+                         'model name) instead of overwriting — automates partial-run row '
+                         'updates. NOTE: `--models all` (default) already writes the complete '
+                         '5-model file in one run; this flag is only needed for partial runs.')
     args, _ = ap.parse_known_args()
 
     with open(SPLIT_JSON) as f:
@@ -245,6 +256,16 @@ def main():
 
     out_json = args.output_json
     results['max_images'] = args.max_images
+    if args.merge_existing and os.path.exists(out_json):
+        prev = json.load(open(out_json))
+        for m in results['models']:
+            prev['models'] = [x for x in prev['models'] if x['name'] != m['name']]
+            prev['models'].append(m)
+        prev['num_images'] = results['num_images']
+        prev['max_images'] = results['max_images']
+        prev['timestamp'] = results['timestamp']
+        results = prev
+        print(f'[merge] rows upserted into existing file -> {len(results["models"])} total')
     with open(out_json, 'w') as f:
         json.dump(results, f, indent=2)
     print(f'\nSaved -> {out_json}')

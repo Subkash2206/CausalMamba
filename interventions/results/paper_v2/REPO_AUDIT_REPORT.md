@@ -130,11 +130,20 @@ All CIs exclude zero -> all per-image drops significant (consistent with the Wil
 
 ## 5. Qualitative Example-Mask Figures (clean vs feature-LP)
 
-**Status: CURRENT and USABLE for CVC.**
-- `interventions/experiments/make_robustness_figures.py` generates **Input / GT / prediction triplets under Clean, Input-LP (0.25), Feature-LP (0.25)** for the 4 CVC models, using the **current checkpoints** (`best-vmunet-cvc.pth` canonical, TSA finetune, `unet_cvc_best_256.pth`, `best-swinunetr-cvc-256.pth`).
-- Outputs exist: `interventions/results/figures/cvc_sample_{10,40,80}.png` (2235x1411, **150 dpi** - needs a 300-dpi re-run for the paper; change `dpi=150` to `dpi=300` in the script) + `vmunet_feature_spectrum.png`.
-- **ISIC side does not exist yet** - the script is CVC-only (`CVCDataset`). A matched ISIC example panel would need a new script using the ISIC held-out eval machinery (`eval_isic_heldout.py` + the ISIC checkpoints).
-- `cvc_audit/sample_*.png` and `cvc_audit_256/sample_*.png` are audit strips (1920x480), not paper figures. `paper/figures/fig*.png` are the OLD SPIE-era figures (stale models) - do not reuse.
+**Status: CURRENT and USABLE for both datasets, all at 300 dpi.**
+- `interventions/experiments/make_robustness_figures.py` generates **Input / prediction
+  grids under Clean, Input-LP (0.25), Feature-LP (0.25)** for the 4 CVC models
+  (current checkpoints) -> `results/figures/cvc_sample_{10,40,80}.png` (4470x2821, 300 dpi)
+  + `vmunet_feature_spectrum.png`.
+- `interventions/experiments/make_isic_robustness_figures.py` mirrors that style for the
+  5 ISIC held-out models (VM-UNet, ResNet50-UNet ISIC/CVC recipes, Swin-UNETR,
+  Swin-UNet) on 3 held-out test images chosen by lesion size (small/medium/large) ->
+  `results/paper_v2/figures/isic_sample_{small,medium,large}.png` (5370x2821, 300 dpi),
+  using the exact `eval_isic_heldout.py` protocol (normalization, per-model resize,
+  hooks, apply_tsa) so the panels match the audited numbers.
+- `cvc_audit/sample_*.png` and `cvc_audit_256/sample_*.png` are audit strips (1920x480),
+  not paper figures. `paper/figures/fig*.png` are the OLD SPIE-era figures (stale models)
+  - do not reuse.
 
 ## 6. Regeneration Order (checkpoints -> tables/figures)
 
@@ -153,11 +162,11 @@ All CIs exclude zero -> all per-image drops significant (consistent with the Wil
 5. **ISIC held-out (Table 2 ISIC column):** `python interventions/experiments/eval_isic_heldout.py --models all` -> `isic_heldout_eval.json`.
 6. **Stats:** `python interventions/experiments/audit_isbi_numbers.py` (bootstrap CIs + draft verification); `summarize_inversion.py` (Table-2 markdown rows).
 7. **Paper package:** `python interventions/experiments/export_isbi_package.py` -> `paper_v2/tables/*.csv` + `paper_v2/figures/*.png` (300 dpi).
-8. **Qualitative figure:** `python interventions/experiments/make_robustness_figures.py` -> `results/figures/cvc_sample_*.png`.
+8. **Qualitative figures (all 300 dpi):** `python interventions/experiments/make_robustness_figures.py` -> `results/figures/cvc_sample_*.png`; `python interventions/experiments/make_isic_robustness_figures.py` -> `paper_v2/figures/isic_sample_*.png`.
 
 ### Manual steps / caveats
-1. **One manual JSON merge:** the Swin-UNETR ISIC row was added to `isic_heldout_eval.json` by running `eval_isic_heldout.py --models standardized` and merging its row into the file (the other four rows come from `--models all`). On a clean regeneration, running `--models all` includes Swin-UNETR automatically (it is picked up when `interventions/checkpoints/swinunetr_isic_cvcrecipe_best.pth` exists).
-2. **300-dpi re-run** of `make_robustness_figures.py` (currently 150 dpi).
+1. **No manual JSON merge needed:** `eval_isic_heldout.py --models all` (default) writes the complete 5-model `isic_heldout_eval.json` in one pass; partial runs use `--merge_existing` to upsert rows into the existing file (dedupe by name, verified end-to-end).
+2. **All figures are 300 dpi** (both figure scripts); no re-run needed.
 3. **GPU constraint:** the held-out evals OOM/starve if run concurrently with training on the 6 GB GPU (run on an idle GPU).
 4. **Cache:** `interventions/cache/isic256/*.pt` is gitignored - a fresh checkout must rebuild it (first `ISICCacheDataset` use) or copy it over; without it, the raw 29 MP ISIC images are decoded per epoch.
 5. **Canonical VSSM path:** always use `SpectralMamba/models/vmunet/vmamba.py` (canonical vectorized scan), never the `SpectralMamba/VM-UNet/...` copy (legacy JIT loop).

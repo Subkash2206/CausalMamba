@@ -58,7 +58,7 @@ warning: fragility claims must name the exact architecture, not the family.
 ## 2. Methods
 
 ### 2.1 Datasets and splits
-CVC-ClinicDB (612 polyp frames) and ISIC2018 (2,594 lesion images). Deterministic
+CVC-ClinicDB (612 polyp frames) [11] and ISIC2018 (2,594 lesion images) [11]. Deterministic
 splits (seed 42) carve ISIC into 2,075/259/260 and CVC into 489/61/62
 train/val/test; the test splits were untouched until final evaluation. Model selection
 uses the val splits only. Table 2 reports both datasets on their held-out test splits;
@@ -92,6 +92,9 @@ Input-domain LP applies the same mask to the resized input. All interventions ar
 post-training; no parameters change.
 
 ### 2.4 Metrics and statistics
+Pooled and per-image Dice (mean ± SD, bootstrap 95% CI); boundary F1 (BF1) and HD95 [6]
+for the SSM/CNN legs on CVC (the CNN's feature-LP HD95 is undefined — empty predictions —
+and omitted); paired Wilcoxon signed-rank tests on per-image Dice, and 95% bootstrap CIs.
 
 ---
 
@@ -107,7 +110,7 @@ ViT is the most resilient: its worst point (0.264 at rho = 0.10) exceeds the SSM
 worst by a wide margin, and it degrades only gradually (0.600 at rho = 0.25). All
 per-image effects are significant (Wilcoxon p < 1e-18 for every model at rho = 0.25).
 
-**Boundary locus.** At rho = 0.25 the SSM's errors concentrate on the lesion boundary:
+**Boundary locus.** At rho = 0.25 the SSM's errors concentrate on the lesion boundary [7]:
 the error rate in a ±5-px band is 20.4%, versus 0.10% in the interior — a 86.5x
 ratio — with background errors at 0.31%. High-frequency features are therefore
 functionally necessary for boundary discrimination, not decoration. Lesion size is a
@@ -144,15 +147,10 @@ input-domain robustness (+4.6 pts pooled on CVC input-LP, −8.1% -> −3.5%) bu
 transfer across domains.
 
 ### 3.4 Boundary metrics
-Feature-LP destroys boundary structure wherever it is effective: the SSM's boundary F1
+Feature-LP destroys boundary structure wherever it is effective [6]: the SSM's boundary F1
 falls from 0.672 to 0.062 and HD95 rises from 21.4 to 93.9 px; the ViT degrades
 0.409->0.192 BF1 (HD95 51.0->75.9). The CNN's feature-LP predictions are entirely empty
 (BF1 0.000; HD95 undefined), consistent with its total collapse.
-
-Pooled and per-image Dice (mean ± SD, bootstrap 95% CI); boundary F1 (BF1) and HD95
-for the SSM/CNN legs on CVC (the CNN's feature-LP HD95 is undefined — empty
-predictions — and omitted); paired Wilcoxon signed-rank tests on per-image Dice, and
-95% bootstrap CIs.
 
 
 ---

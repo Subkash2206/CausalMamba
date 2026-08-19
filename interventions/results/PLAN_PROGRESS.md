@@ -22,7 +22,7 @@
 
 ## Remaining before Oct 26
 1. Lock author list; format the draft to IEEE/ISBI LaTeX (two-column).
-2. Optional: example-mask overlays for Fig. 2 (nice-to-have).
+2. ~~Optional: example-mask overlays for Fig. 2~~ **Done** — ISIC + CVC qualitative panels at 300 dpi (`make_isic_robustness_figures.py`, `make_robustness_figures.py`).
 3. Optional (only if a reviewer asks): canonical ISIC SSM retrain (Kaggle package intact).
 
 ## Delivered this session (commits)
@@ -31,10 +31,12 @@
 | Cached ISIC dataset | `interventions/isic_dataset.py` | 256px tensor cache (disk+RAM), kills per-epoch 29MP decode |
 | Swin-UNETR ISIC trainer | `interventions/train_swinunetr_isic18_cvcrecipe.py` | ViT leg closure (CVC recipe + ImageNet norm) |
 | VM-UNet ISIC trainer | `interventions/train_vmunet_isic18_cvcrecipe.py` | + cache, cudnn.benchmark, --max_batches/--max_epochs, resume |
-| Held-out ISIC eval | `interventions/experiments/eval_isic_heldout.py` | + Swin-UNETR build/attach support |
+| Held-out ISIC eval | `interventions/experiments/eval_isic_heldout.py` | + Swin-UNETR build/attach support; `--models all` complete file; `--merge_existing` upsert for partial runs |
 | Held-out results | `interventions/results/isic_heldout_eval.json` | 5 models incl. Swin-UNETR (−0.6%) |
 | Skeleton v3 reframe | `interventions/results/ISBI_SKELETON_v2.md` | No-inversion story: consistent CNN>SSM>ViT ordering; Swin-UNet anomaly |
 | Summarizer | `interventions/experiments/summarize_inversion.py` | Prefers recipe-matched rows |
+| ISIC qualitative figure | `interventions/experiments/make_isic_robustness_figures.py` | 300-dpi clean/input-LP/feat-LP panels, 5 held-out models, small/med/large lesions |
+| Draft cleanup | `interventions/results/paper_v2/ISBI_PAPER_DRAFT.md` | metrics paragraph moved to 2.4; citations [6][7][11]; Table 2 VM-UNet CVC 0.912->0.244 |
 
 ## Eval notes (do not repeat mistakes)
 - **Hook order:** clean pass must run BEFORE `attach_lp` (deterministic intervention →
@@ -50,7 +52,8 @@
    row caveated with the legacy-VSSM footnote).
 2. Optional (only if a reviewer asks): run the canonical ISIC SSM retrain on cloud or in a
    laptop GPU gap (~3 days local / half a day rented).
-3. Lock author list; assemble citations (10–12); render 300-dpi figures.
+3. Lock author list; assemble citations (10–12); ~~render 300-dpi figures~~ **done** (all
+   qualitative + quantitative figures are 300 dpi).
 
 ## Known blockers
 - None active. One documented caveat in Table 2 (ISIC SSM = legacy VSSM implementation).

@@ -169,7 +169,7 @@ def main():
         axes[0][0].set_title('Input', fontsize=11)
         plt.tight_layout()
         out_p = os.path.join(FIG_DIR, f'cvc_sample_{idx}.png')
-        plt.savefig(out_p, dpi=150, bbox_inches='tight')
+        plt.savefig(out_p, dpi=300, bbox_inches='tight')
         plt.close()
         print(f'  saved {out_p}')
 
@@ -203,7 +203,7 @@ def main():
         ax.axis('off')
     out_s = os.path.join(FIG_DIR, 'vmunet_feature_spectrum.png')
     plt.tight_layout()
-    plt.savefig(out_s, dpi=150, bbox_inches='tight')
+    plt.savefig(out_s, dpi=300, bbox_inches='tight')
     plt.close()
     print(f'  saved {out_s}')
 
