@@ -4,10 +4,11 @@ straight from the result JSONs (no hardcoded numbers).
 
 Outputs to interventions/results/paper_v2/{tables,figures}/
 
-    python interventions/experiments/export_isbi_package.py
+    python interventions/experiments/export_isbi_package.py          # everything
+    python interventions/experiments/export_isbi_package.py --fig2   # Fig. 2 only
 """
 
-import os, csv, json
+import os, sys, csv, json
 
 import numpy as np
 import matplotlib
@@ -172,11 +173,17 @@ def fig2_cross_dataset_heatmap():
     ax.set_xticks(range(2)); ax.set_xticklabels(labels, fontsize=7)
     ax.set_yticks(range(3)); ax.set_yticklabels([a[0] for a in archs], fontsize=7)
     ax.tick_params(length=0)
+    # Pick the annotation color from each cell's actual luminance so labels stay
+    # visible on both light ('Reds' low-end, e.g. the -100% cell) and dark cells.
+    norm = plt.Normalize(vmin=-100, vmax=0)
+    cell_rgba = im.cmap(norm(vals))                     # (3, 2, 4)
+    lum = (0.299 * cell_rgba[..., 0] + 0.587 * cell_rgba[..., 1]
+           + 0.114 * cell_rgba[..., 2])
     for i in range(3):
         for j in range(2):
             ax.text(j, i, f'{vals[i, j]:.0f}%', ha='center', va='center',
                     fontsize=9, fontweight='bold',
-                    color='white' if vals[i, j] < -40 else 'black')
+                    color='white' if lum[i, j] < 0.6 else 'black')
     for _, spine in ax.spines.items():
         spine.set_visible(True)
     cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
@@ -190,6 +197,11 @@ def fig2_cross_dataset_heatmap():
 
 
 def main():
+    # --fig2: regenerate only the cross-dataset fragility heatmap (Fig. 2), e.g.
+    # after a styling tweak, without touching tables / fig1.
+    if len(sys.argv) > 1 and sys.argv[1] == '--fig2':
+        fig2_cross_dataset_heatmap()
+        return
     export_table1()
     export_table2()
     export_table3()
