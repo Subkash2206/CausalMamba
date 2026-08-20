@@ -4,8 +4,6 @@
 
 ### A Cross-Dataset Causal Analysis of CNN, SSM, and ViT Segmenters
 
-Submitted to IEEE International Symposium on Biomedical Imaging (ISBI) 2027
-
 Subhash Kashyap
 
 Python PyTorch MONAI CVC-ClinicDB ISIC2018 Bootstrap-CI
