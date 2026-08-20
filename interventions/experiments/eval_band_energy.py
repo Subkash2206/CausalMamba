@@ -50,9 +50,9 @@ LEGS = [
     ('vit_isic', 'swinunetr', os.path.join(_REPO, 'interventions', 'checkpoints',
                                            'swinunetr_isic_cvcrecipe_best.pth'), 'isic', True),
 ]
-def band_ratios(fmap):
+def band_ratios(fmap, layout='nchw'):
     f = fmap.float()
-    if f.shape[-1] in (96, 192, 384, 768):
+    if layout == 'nhwc':
         f = f.permute(0, 3, 1, 2)
     f = f.mean(dim=1, keepdim=True)
     f = f - f.mean(dim=(-2, -1), keepdim=True)
@@ -108,7 +108,33 @@ def prep(img01, gt, dataset, device):
 def run_leg(label, arch, ckpt, dataset, sigmoid, limit, device):
     print(f'\n===== {label}: {arch} {dataset.upper()} =====')
     print(f'  ckpt: {ckpt}')
-    model = build_model_heldout(arch, ckpt, device)
+    if arch == 'vmunet' and dataset == 'cvc':
+        from interventions.experiments.cross_arch_cvc_eval import build_model as _bm
+        model = _bm(arch, ckpt, device)   # CVC canonical checkpoint -> canonical module
+    elif arch == 'vmunet':
+        # ISIC checkpoint was trained with the VM-UNet REPO VSSM implementation.
+        # The canonical module may already be cached in sys.modules via transitive
+        # imports, so import the repo copy directly after clearing the cache.
+        repo = os.path.join(_REPO, 'SpectralMamba', 'VM-UNet')
+        if repo not in sys.path:
+            sys.path.insert(0, repo)
+        for k in [k for k in list(sys.modules)
+                  if k == 'models.vmunet' or k.startswith('models.vmunet.')]:
+            del sys.modules[k]
+        from models.vmunet.vmunet import VMUNet
+        _NC = {'num_classes': 1, 'input_channels': 3,
+               'depths': [2, 2, 9, 2], 'depths_decoder': [2, 9, 2, 2],
+               'drop_path_rate': 0.2}
+        model = VMUNet(**_NC).to(device)
+        sd = torch.load(ckpt, map_location=device)
+        if isinstance(sd, dict):
+            sd = sd.get('model_state_dict') or sd.get('state_dict') or sd
+        model.load_state_dict({k.replace('module.', ''): v for k, v in sd.items()},
+                              strict=True)
+        model.eval()
+    else:
+        model = build_model_heldout(arch, ckpt, device)
+    assert model is not None
     targets = stage_targets(model, arch)
 
     if dataset == 'cvc':
@@ -129,6 +155,7 @@ def run_leg(label, arch, ckpt, dataset, sigmoid, limit, device):
         items = load_isic_pairs(names)
     print(f'  images: {len(items)}')
 
+    layout_for = {nm: lay for nm, _, lay in targets}
     accum = {nm: [] for nm, _, _ in targets}
     resos = {}
     with torch.no_grad():
@@ -150,8 +177,11 @@ def run_leg(label, arch, ckpt, dataset, sigmoid, limit, device):
                 if nm not in feats:
                     continue
                 f = feats[nm]
-                resos[nm] = tuple(f.shape[-2:])
-                accum[nm].append(band_ratios(f))
+                if layout_for[nm] == 'nhwc':
+                    resos[nm] = (int(f.shape[1]), int(f.shape[2]))
+                else:
+                    resos[nm] = tuple(f.shape[-2:])
+                accum[nm].append(band_ratios(f, layout_for[nm]))
     rows = []
     for nm, _, _ in targets:
         arr = np.array(accum[nm])
@@ -173,11 +203,15 @@ def run_leg(label, arch, ckpt, dataset, sigmoid, limit, device):
 def main():
     ap = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     ap.add_argument('--limit', type=int, default=0)
+    ap.add_argument('--legs', default=None, help='comma-separated leg subset, e.g. ssm_cvc')
     args, _ = ap.parse_known_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device: {device}')
     all_rows = []
+    sel = set(args.legs.split(',')) if args.legs else {l[0] for l in LEGS}
     for label, arch, ckpt, dataset, sigmoid in LEGS:
+        if label not in sel:
+            continue
         all_rows += run_leg(label, arch, ckpt, dataset, sigmoid, args.limit, device)
     out_p = os.path.join(OUT_DIR, 'band_energy_results.csv')
     with open(out_p, 'w') as f:
